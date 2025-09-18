@@ -4,9 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "preinstall": "rimraf dist",
+    "install": "",
+    "clean": "rimraf dist",
+    "build": "npm ci && tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon src/index.ts",
-    "build": "tsc"
+    "dev": "nodemon --exec ts-node src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -18,7 +21,7 @@
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
-    "@types/express": "^4.17.21",
+    "@types/express": "^4.17.23",
     "@types/node": "^24.5.2",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
