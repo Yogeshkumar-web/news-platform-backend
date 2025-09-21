@@ -1,44 +1,134 @@
 import express, { Application } from "express";
-import articleRoute from "./routes/articlesRoute";
-import cors from "cors";
+import cors, { CorsOptions } from "cors";
+import cookieParser from "cookie-parser";
+import compression from "compression";
+import { env } from "./config/environment";
+import { globalErrorHandler, notFoundHandler } from "./middleware/errorHandler";
+import { globalRateLimit } from "./middleware/rateLimiter";
+import { securityMiddleware, traceIdMiddleware } from "./middleware/security";
+import { HealthChecker } from "./utils/health";
+import { ResponseHandler } from "./utils/response";
+import logger from "./utils/logger";
+import authRoutes from "./routes/authRoute";
+import articleRoutes from "./routes/articlesRoute";
+import categoryRoutes from "./routes/categoryRoute";
 
-const app: Application = express();
+import { asyncHandler } from "./utils/asyncHandler";
 
-// port
-const port = process.env.PORT || 5000;
+class App {
+  public app: Application;
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:5000",
-  "https://news-platform-backend.onrender.com",
-];
+  constructor() {
+    this.app = express();
+    this.initializeMiddleware();
+    this.initializeRoutes();
+    this.initializeErrorHandling();
+  }
 
-const corsOptions = {
-  origin: (
-    origin: string | undefined,
-    callback: (err: Error | null, allow?: boolean) => void
-  ) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  credentials: true,
-  optionsSuccessStatus: 204,
-};
+  private initializeMiddleware(): void {
+    // Security middleware
+    this.app.use(securityMiddleware);
 
-// middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cors(corsOptions));
+    // Request tracking
+    this.app.use(traceIdMiddleware);
 
-// Routes
-app.use("/api", articleRoute);
+    // Compression
+    this.app.use(compression());
 
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
+    // CORS configuration
+    const corsOptions: CorsOptions = {
+      origin: (origin: string | undefined, callback: Function) => {
+        const allowedOrigins = env.CORS_ORIGINS;
 
-export default app;
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          logger.warn("CORS violation attempt", { origin, allowedOrigins });
+          callback(
+            new Error(`CORS policy violation: Origin '${origin}' not allowed`)
+          );
+        }
+      },
+      methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+      credentials: true,
+      optionsSuccessStatus: 204,
+    };
+
+    this.app.use(cors(corsOptions));
+
+    // Body parsing
+    this.app.use(express.json({ limit: "10mb" }));
+    this.app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+    this.app.use(cookieParser());
+
+    // Rate limiting
+    this.app.use(globalRateLimit);
+
+    // Request logging
+    this.app.use((req, res, next) => {
+      logger.info("Incoming request", {
+        method: req.method,
+        url: req.url,
+        ip: req.ip,
+        userAgent: req.get("User-Agent"),
+        traceId: (req as any).traceId,
+      });
+      next();
+    });
+  }
+
+  private initializeRoutes(): void {
+    // Health check endpoint
+    this.app.get(
+      "/health",
+      asyncHandler(async (req, res) => {
+        const healthStatus = await HealthChecker.checkHealth();
+        const statusCode = healthStatus.status === "healthy" ? 200 : 503;
+        return res.status(statusCode).json(healthStatus);
+      })
+    );
+
+    // API routes
+    this.app.use("/api/auth", authRoutes);
+    this.app.use("/api/articles", articleRoutes);
+    this.app.use("/api/categories", categoryRoutes);
+
+    // API info endpoint
+    this.app.get("/api", (req, res) => {
+      return ResponseHandler.success(
+        res,
+        {
+          name: "News Platform API",
+          version: "1.0.0",
+          environment: env.NODE_ENV,
+          timestamp: new Date().toISOString(),
+        },
+        "API is running successfully"
+      );
+    });
+  }
+
+  private initializeErrorHandling(): void {
+    // 404 handler
+    this.app.use(notFoundHandler);
+
+    // Global error handler
+    this.app.use(globalErrorHandler);
+  }
+
+  public listen(): void {
+    this.app.listen(env.PORT, () => {
+      logger.info(
+        `🚀 Server running on port ${env.PORT} in ${env.NODE_ENV} mode`
+      );
+      logger.info(
+        `📊 Health check available at http://localhost:${env.PORT}/health`
+      );
+      logger.info(
+        `📚 API documentation available at http://localhost:${env.PORT}/api`
+      );
+    });
+  }
+}
+
+export default App;

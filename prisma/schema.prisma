@@ -1,0 +1,142 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+// User Role Enum
+enum UserRole {
+    ADMIN
+    SUPERADMIN
+    WRITER
+    USER
+    SUBSCRIBER
+}
+
+// Article Status Enum
+enum ArticleStatus {
+    DRAFT
+    PUBLISHED
+    ARCHIVED
+    PENDING_REVIEW
+}
+
+// --- CORE MODELS ---
+
+model User {
+    id           String   @id @default(cuid())
+    name         String   @db.VarChar(150)
+    email        String   @unique @db.VarChar(255)
+    hashedPass   String   @db.VarChar(255)
+    role         UserRole @default(USER)
+    profileImage String?  @db.VarChar(255)
+    bio          String?  @db.Text
+    isSuspended  Boolean  @default(false)
+    createdAt    DateTime @default(now()) @map("created_at")
+    updatedAt    DateTime @updatedAt @map("updated_at")
+
+    // Relationships
+    articles Article[]
+    comments Comment[]
+    likes    Like[]
+}
+
+model Article {
+    id        String        @id @default(cuid())
+    title     String        @db.VarChar(255)
+    slug      String        @unique @db.VarChar(255)
+    excerpt   String?       @db.VarChar(500)
+    content   String        @db.Text
+    status    ArticleStatus @default(DRAFT)
+    thumbnail String?       @map("thumbnail_url")
+    featured  Boolean       @default(false)
+    viewCount Int           @default(0)
+    isPremium Boolean       @default(false) @map("is_premium")
+    createdAt DateTime      @default(now()) @map("created_at")
+    updatedAt DateTime      @updatedAt @map("updated_at")
+
+    // Relationships
+    authorId          String
+    author            User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+    comments          Comment[]
+    likes             Like[]
+    articleCategories ArticleCategory[]
+
+    @@index([authorId])
+    @@index([status])
+    @@map("articles")
+}
+
+model Category {
+    id        String   @id @default(cuid())
+    key       String   @unique
+    label     String
+    count     Int      @default(0)
+    isHidden  Boolean  @default(false)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Relations
+    articleCategories ArticleCategory[]
+
+    @@map("categories")
+}
+
+// Join table for many-to-many relationship
+model ArticleCategory {
+    id         String   @id @default(cuid())
+    article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+    articleId  String
+    category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+    categoryId String
+
+    createdAt DateTime @default(now())
+
+    @@unique([articleId, categoryId])
+    @@index([categoryId])
+    @@index([articleId])
+    @@map("article_categories")
+}
+
+// Enhanced Comment Model (with self-relation for threading)
+model Comment {
+    id         String   @id @default(cuid())
+    content    String   @db.Text
+    parentId   String?
+    isApproved Boolean  @default(true)
+    isSpam     Boolean  @default(false)
+    createdAt  DateTime @default(now()) @map("created_at")
+    updatedAt  DateTime @updatedAt @map("updated_at")
+
+    // Relationships
+    articleId String
+    article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+    authorId  String
+    author    User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+    // Self-relation for threaded comments
+    parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+    children Comment[] @relation("CommentReplies")
+
+    @@index([articleId])
+    @@index([authorId])
+    @@map("comments")
+}
+
+// Like Model
+model Like {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+
+    // Relationships
+    userId    String
+    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    articleId String
+    article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, articleId])
+    @@map("likes")
+}
