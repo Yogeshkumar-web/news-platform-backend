@@ -50,6 +50,8 @@ model Article {
     slug      String        @unique @db.VarChar(255)
     excerpt   String?       @db.VarChar(500)
     content   String        @db.Text
+    contentJson String?     @db.Text  
+    contentType String      @default("html") 
     status    ArticleStatus @default(DRAFT)
     thumbnail String?       @map("thumbnail_url")
     featured  Boolean       @default(false)
@@ -57,6 +59,7 @@ model Article {
     isPremium Boolean       @default(false) @map("is_premium")
     createdAt DateTime      @default(now()) @map("created_at")
     updatedAt DateTime      @updatedAt @map("updated_at")
+    publishedAt DateTime?
 
     // Relationships
     authorId          String
@@ -65,8 +68,10 @@ model Article {
     likes             Like[]
     articleCategories ArticleCategory[]
 
+    @@index([status, publishedAt])
     @@index([authorId])
-    @@index([status])
+    @@index([slug])
+    @@index([createdAt])
     @@map("articles")
 }
 
@@ -121,8 +126,10 @@ model Comment {
     parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
     children Comment[] @relation("CommentReplies")
 
-    @@index([articleId])
-    @@index([authorId])
+    @@index([articleId, createdAt]) // Most common query: get comments by article, ordered by date
+    @@index([authorId])             // Get user's comments
+    @@index([isApproved, isSpam])   // Filter approved/non-spam comments
+    @@index([createdAt])            // Sort by date
     @@map("comments")
 }
 

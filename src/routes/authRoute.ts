@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { AuthController } from "../controllers/AuthController";
 import {
-  authValidation,
-  handleValidationErrors,
-  sanitizeInput,
+    authValidation,
+    handleValidationErrors,
+    sanitizeInput,
 } from "../middleware/validation";
 import { authRateLimit } from "../middleware/rateLimiter";
 import { authenticateToken } from "../middleware/authMiddleware";
@@ -19,18 +19,18 @@ router.use(sanitizeInput);
 
 // Register route
 router.post(
-  "/register",
-  authValidation.register,
-  handleValidationErrors,
-  authController.register
+    "/register",
+    authValidation.register,
+    handleValidationErrors,
+    authController.register
 );
 
 // Login route
 router.post(
-  "/login",
-  authValidation.login,
-  handleValidationErrors,
-  authController.login
+    "/login",
+    authValidation.login,
+    handleValidationErrors,
+    authController.login
 );
 
 // Get current user profile (protected)
