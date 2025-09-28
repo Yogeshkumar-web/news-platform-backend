@@ -3,7 +3,7 @@ import db from "../config/database";
 export class CategoryRepository {
     async getAllFromCategoryTable() {
         return db.category.findMany({
-            orderBy: { count: "desc", label: "asc" },
+            orderBy: [{ count: "desc" }, { label: "asc" }],
             select: { key: true, label: true, count: true, isHidden: true },
         });
     }

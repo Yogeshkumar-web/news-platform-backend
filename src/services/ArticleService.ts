@@ -1,4 +1,3 @@
-/* src/services/ArticleService.ts */
 import { ArticleRepository } from "../repositories/ArticleRepository";
 import { normalizePageParams, buildPaginationMeta } from "../utils/pagination";
 import { categoryKey } from "../utils/category";
@@ -13,6 +12,7 @@ import {
     GetMyArticlesQuery,
     GetArticlesQuery,
 } from "../types";
+import { UserRole } from "@prisma/client";
 
 // DEFAULT SELECT - use `select` for nested shapes to avoid include/select mismatch
 const DEFAULT_SELECT = {
@@ -23,6 +23,7 @@ const DEFAULT_SELECT = {
     thumbnail: true,
     isPremium: true,
     viewCount: true,
+    status: true,
     createdAt: true,
     author: { select: { id: true, name: true, profileImage: true } },
     _count: { select: { likes: true, comments: true } },
@@ -507,6 +508,11 @@ export class ArticleService {
             }),
         ]);
 
+        console.log("📊 Database results:", {
+            total,
+            found: articlesRaw.length,
+        });
+
         const articles = (articlesRaw as any[]).map((a) =>
             this.mapArticleDbToDto(a as ArticleDb)
         );
@@ -518,12 +524,25 @@ export class ArticleService {
     }
 
     async getArticleBySlug(slug: string) {
+        console.log("🔍 DEBUG: Received slug:", JSON.stringify(slug));
+        console.log("🔍 DEBUG: Slug type:", typeof slug);
+        console.log("🔍 DEBUG: Slug length:", slug?.length);
+
         if (!slug) throw new NotFoundError("Invalid slug", "INVALID_SLUG");
 
         const articleRaw = (await this.repo.findBySlug(
             slug,
             DEFAULT_SELECT as any
         )) as any;
+
+        console.log("📄 DEBUG: Database result:", {
+            found: !!articleRaw,
+            id: articleRaw?.id,
+            title: articleRaw?.title,
+            slug: articleRaw?.slug,
+            status: articleRaw?.status,
+            rawArticle: articleRaw ? "Object found" : "NULL",
+        });
 
         if (!articleRaw || articleRaw.status !== "PUBLISHED") {
             throw new NotFoundError("Article not found", "ARTICLE_NOT_FOUND");

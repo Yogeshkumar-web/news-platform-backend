@@ -226,6 +226,7 @@ export const articleValidation = {
             .withMessage("Invalid status filter"),
     ],
 
+    // Individual article slug validation (strict)
     getBySlug: [
         param("slug")
             .isString()
@@ -238,6 +239,31 @@ export const articleValidation = {
             .withMessage(
                 "Slug can only contain lowercase letters, numbers, and hyphens"
             ),
+    ],
+
+    // Category name validation (more lenient than slug)
+    getByCategory: [
+        param("categoryName")
+            .isString()
+            .trim()
+            .isLength({ min: 1, max: 50 })
+            .withMessage(
+                "Category name is required and must be less than 50 characters"
+            )
+            .matches(/^[a-z0-9-]+$/)
+            .withMessage(
+                "Category name can only contain lowercase letters, numbers, and hyphens"
+            ),
+
+        query("page")
+            .optional()
+            .isInt({ min: 1 })
+            .withMessage("Page must be a positive integer"),
+
+        query("limit")
+            .optional()
+            .isInt({ min: 1, max: 50 })
+            .withMessage("Limit must be between 1 and 50"),
     ],
 
     getById: [
@@ -418,4 +444,45 @@ export const sanitizeCommentInput = (
     }
 
     next();
+};
+
+// Category-specific validation (more lenient than article slug)
+export const categoryValidation = {
+    getByCategory: [
+        param("categoryName")
+            .isString()
+            .trim()
+            .isLength({ min: 1, max: 50 })
+            .withMessage(
+                "Category name is required and must be less than 50 characters"
+            )
+            .matches(/^[a-z0-9-]+$/)
+            .withMessage(
+                "Category name can only contain lowercase letters, numbers, and hyphens"
+            )
+            .custom((value) => {
+                // Additional category-specific validation
+                if (value.startsWith("-") || value.endsWith("-")) {
+                    throw new Error(
+                        "Category name cannot start or end with hyphen"
+                    );
+                }
+                if (value.includes("--")) {
+                    throw new Error(
+                        "Category name cannot contain consecutive hyphens"
+                    );
+                }
+                return true;
+            }),
+
+        query("page")
+            .optional()
+            .isInt({ min: 1 })
+            .withMessage("Page must be a positive integer"),
+
+        query("limit")
+            .optional()
+            .isInt({ min: 1, max: 50 })
+            .withMessage("Limit must be between 1 and 50"),
+    ],
 };

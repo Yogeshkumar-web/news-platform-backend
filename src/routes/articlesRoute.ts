@@ -7,6 +7,7 @@ import { ArticleController } from "../controllers/ArticleController";
 import { authenticateToken, requireRole } from "../middleware/authMiddleware";
 import {
     articleValidation,
+    categoryValidation,
     handleValidationErrors,
 } from "../middleware/validation";
 
@@ -70,7 +71,7 @@ router.get(
 
 router.get(
     "/category/:categoryName",
-    articleValidation.getBySlug, // Using slug validation for categoryName
+    categoryValidation.getByCategory, // Using slug validation for categoryName
     handleValidationErrors,
     controller.getArticlesByCategory
 );

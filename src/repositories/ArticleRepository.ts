@@ -9,49 +9,6 @@ import {
     SearchOptions,
 } from "../types";
 
-// interface FindManyOptions {
-//     where?: any;
-//     skip?: number;
-//     take?: number;
-//     orderBy?: any;
-//     select?: any;
-// }
-
-// interface FindPublishedOptions {
-//     where?: any;
-//     skip?: number;
-//     take?: number;
-//     orderBy?: any;
-//     select?: any;
-// }
-
-// interface FindCategoriesOptions {
-//     select?: any;
-//     orderBy?: any;
-// }
-
-// interface FindByAuthorOptions {
-//     skip?: number;
-//     take?: number;
-//     orderBy?: any;
-//     select?: any;
-//     status?: string;
-// }
-
-// interface SearchOptions {
-//     skip?: number;
-//     take?: number;
-//     orderBy?: any;
-//     select?: any;
-// }
-
-// interface FindPopularOptions {
-//     skip?: number;
-//     take?: number;
-//     select?: any;
-//     daysBack?: number;
-// }
-
 export class ArticleRepository {
     // Existing methods...
     async countPublished(where: any = {}): Promise<number> {
@@ -136,7 +93,7 @@ export class ArticleRepository {
                             },
                         },
                     },
-                    orderBy: { createdAt: "desc" as const },
+                    orderBy: [{ createdAt: "desc" as const }],
                 },
                 _count: { select: { likes: true, comments: true } },
             },
