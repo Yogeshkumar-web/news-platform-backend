@@ -42,7 +42,7 @@ export class AuthService {
         });
 
         if (existingUser) {
-            throw new ConflictError("Email already registered", "EMAIL_EXISTS");
+            throw new ConflictError("Email already registered");
         }
 
         // Hash password safely

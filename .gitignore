@@ -36,6 +36,3 @@ yarn-error.log*
 # Windows
 Thumbs.db
 
-# My Personal Guide
-guide.md
-seed.ts
