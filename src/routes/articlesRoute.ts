@@ -21,25 +21,27 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // Configure multer for image uploads with TypeScript support
-const storage = multer.diskStorage({
-    destination: (
-        req: Request,
-        file: Express.Multer.File,
-        cb: (error: Error | null, destination: string) => void
-    ) => {
-        cb(null, uploadDir);
-    },
-    filename: (
-        req: Request,
-        file: Express.Multer.File,
-        cb: (error: Error | null, filename: string) => void
-    ) => {
-        // Generate unique filename
-        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        const ext = path.extname(file.originalname);
-        cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-    },
-});
+// const storage = multer.diskStorage({
+//     destination: (
+//         req: Request,
+//         file: Express.Multer.File,
+//         cb: (error: Error | null, destination: string) => void
+//     ) => {
+//         cb(null, uploadDir);
+//     },
+//     filename: (
+//         req: Request,
+//         file: Express.Multer.File,
+//         cb: (error: Error | null, filename: string) => void
+//     ) => {
+//         // Generate unique filename
+//         const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+//         const ext = path.extname(file.originalname);
+//         cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+//     },
+// });
+
+const storage = multer.memoryStorage();
 
 const fileFilter = (
     req: Request,
@@ -209,15 +211,3 @@ router.get(
 );
 
 export default router;
-
-// import { Router } from "express";
-// import { ArticleController } from "../controllers/ArticleController";
-
-// const router = Router();
-// const controller = new ArticleController();
-
-// router.get("/", controller.getArticles);
-// router.get("/category/:categoryName", controller.getArticlesByCategory);
-// router.get("/:slug", controller.getArticleBySlug);
-
-// export default router;

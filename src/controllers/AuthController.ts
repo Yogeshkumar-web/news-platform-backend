@@ -100,4 +100,81 @@ export class AuthController {
             );
         }
     );
+
+    // New: Update user profile
+    updateProfile = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const userId = req.user?.id;
+            if (!userId) {
+                return ResponseHandler.error(
+                    res,
+                    "User not authenticated",
+                    401,
+                    "NOT_AUTHENTICATED"
+                );
+            }
+
+            // Request body mein sirf validated fields hi honge
+            const updatedUser = await this.authService.updateProfile(
+                userId,
+                req.body
+            );
+
+            return ResponseHandler.success(
+                res,
+                { user: updatedUser },
+                "Profile updated successfully"
+            );
+        }
+    );
+
+    // New: Upload profile avatar
+    uploadAvatar = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            if (!req.user?.id) {
+                return ResponseHandler.error(
+                    res,
+                    "User not authenticated",
+                    401,
+                    "NOT_AUTHENTICATED"
+                );
+            }
+
+            const imageUrl = await this.authService.uploadAvatar(req.file);
+
+            return ResponseHandler.success(
+                res,
+                { url: imageUrl },
+                "Avatar uploaded successfully"
+            );
+        }
+    );
+
+    // New: Change password
+    changePassword = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const userId = req.user?.id;
+            const { oldPassword, newPassword } = req.body;
+
+            if (!userId) {
+                return ResponseHandler.error(
+                    res,
+                    "User not authenticated",
+                    401,
+                    "NOT_AUTHENTICATED"
+                );
+            }
+
+            await this.authService.changePassword(userId, {
+                oldPassword,
+                newPassword,
+            });
+
+            return ResponseHandler.success(
+                res,
+                null,
+                "Password changed successfully"
+            );
+        }
+    );
 }

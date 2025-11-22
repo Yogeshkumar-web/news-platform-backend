@@ -7,8 +7,21 @@ import {
     AuthenticationError,
     NotFoundError,
     AuthTokenPayload,
+    ValidationError,
 } from "../types";
 import logger from "../utils/logger";
+
+export interface UpdateProfileData {
+    name?: string;
+    email?: string;
+    bio?: string;
+    profileImage?: string | null;
+}
+
+export interface ChangePasswordData {
+    oldPassword: string;
+    newPassword: string;
+}
 
 export interface RegisterData {
     name: string;
@@ -180,6 +193,101 @@ export class AuthService {
         }
 
         return user;
+    }
+
+    /**
+     * Updates user profile information.
+     */
+    async updateProfile(userId: string, data: UpdateProfileData) {
+        if (data.email) {
+            const existingUser = await db.user.findUnique({
+                where: { email: data.email },
+            });
+            if (existingUser && existingUser.id !== userId) {
+                throw new ConflictError("Email already registered");
+            }
+        }
+
+        const updatedUser = await db.user.update({
+            where: { id: userId },
+            data: data,
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                profileImage: true,
+                bio: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+
+        logger.info("User profile updated successfully", { userId });
+        return updatedUser;
+    }
+
+    /**
+     * Handles profile avatar upload. Returns the constructed URL.
+     */
+    async uploadAvatar(file?: Express.Multer.File): Promise<string> {
+        if (!file) {
+            throw new ValidationError("No file provided", "NO_FILE");
+        }
+
+        // URL is based on filename logic in authRoute.ts
+        const filename = file.filename;
+        const imageUrl = `/uploads/avatars/${filename}`;
+
+        logger.info("Avatar uploaded successfully", {
+            filename,
+            size: file.size,
+        });
+
+        return imageUrl;
+    }
+
+    /**
+     * Changes user's password after verifying old password.
+     */
+    async changePassword(userId: string, data: ChangePasswordData) {
+        const { oldPassword, newPassword } = data;
+
+        const user = await db.user.findUnique({
+            where: { id: userId },
+            select: { id: true, hashedPass: true },
+        });
+
+        if (!user) {
+            throw new NotFoundError("User not found", "USER_NOT_FOUND");
+        }
+
+        const isValidPassword = await bcrypt.compare(
+            oldPassword,
+            user.hashedPass
+        );
+        if (!isValidPassword) {
+            throw new AuthenticationError(
+                "Incorrect old password",
+                "INVALID_CREDENTIALS"
+            );
+        }
+
+        const saltRounds =
+            typeof env.BCRYPT_SALT_ROUNDS === "string"
+                ? parseInt(env.BCRYPT_SALT_ROUNDS, 10)
+                : env.BCRYPT_SALT_ROUNDS;
+        const newPasswordHash = await bcrypt.hash(
+            newPassword,
+            saltRounds || 10
+        );
+
+        await db.user.update({
+            where: { id: userId },
+            data: { hashedPass: newPasswordHash },
+        });
+
+        logger.info("User password changed successfully", { userId });
     }
 
     /**

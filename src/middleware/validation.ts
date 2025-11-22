@@ -96,6 +96,51 @@ export const authValidation = {
             .isLength({ min: 8 })
             .withMessage("Password must be at least 8 characters"),
     ],
+    updateProfile: [
+        body("name")
+            .optional()
+            .trim()
+            .isLength({ min: 2, max: 100 })
+            .withMessage("Name must be between 2 and 100 characters")
+            .matches(/^[a-zA-Z\s]+$/)
+            .withMessage("Name can only contain letters and spaces"),
+
+        body("email")
+            .optional()
+            .isEmail()
+            .withMessage("Please provide a valid email")
+            .normalizeEmail()
+            .isLength({ max: 255 })
+            .withMessage("Email must be less than 255 characters"),
+
+        body("bio")
+            .optional()
+            .trim()
+            .isLength({ max: 500 })
+            .withMessage("Bio cannot exceed 500 characters"),
+
+        body("profileImage")
+            .optional({ nullable: true })
+            .isURL()
+            .withMessage("Profile image must be a valid URL or null"),
+    ],
+
+    // New: Validation for changing password
+    changePassword: [
+        body("oldPassword")
+            .isLength({ min: 8 })
+            .withMessage("Old password must be at least 8 characters"),
+
+        body("newPassword")
+            .isLength({ min: 8, max: 128 })
+            .withMessage("New password must be between 8 and 128 characters")
+            .matches(
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/
+            )
+            .withMessage(
+                "New password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+            ),
+    ],
 };
 
 export const articleValidation = {

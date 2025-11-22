@@ -2,6 +2,7 @@ import { ArticleRepository } from "../repositories/ArticleRepository";
 import { normalizePageParams, buildPaginationMeta } from "../utils/pagination";
 import { categoryKey } from "../utils/category";
 import logger from "../utils/logger";
+import ImageKit from "imagekit";
 
 import {
     NotFoundError,
@@ -13,6 +14,13 @@ import {
     GetArticlesQuery,
 } from "../types";
 import { UserRole } from "@prisma/client";
+import { env } from "../config/environment";
+
+const imagekit = new ImageKit({
+    publicKey: env.IMAGEKIT_PUBLIC_KEY,
+    privateKey: env.IMAGEKIT_PRIVATE_KEY,
+    urlEndpoint: env.IMAGEKIT_URL_ENDPOINT,
+});
 
 // DEFAULT SELECT - use `select` for nested shapes to avoid include/select mismatch
 const DEFAULT_SELECT = {
@@ -415,21 +423,28 @@ export class ArticleService {
         return this.mapArticleDbToDto(updatedArticle as EditArticleDb);
     }
 
-    // UPLOAD IMAGE (placeholder)
     async uploadImage(file?: Express.Multer.File): Promise<string> {
         if (!file) {
             throw new ValidationError("No file provided", "NO_FILE");
         }
 
-        const filename = `${Date.now()}-${file.originalname}`;
-        const imageUrl = `/uploads/images/${filename}`;
+        // Convert Buffer to Base64 (ImageKit requires this or a stream)
+        const base64File = file.buffer.toString("base64");
 
-        logger.info("Image uploaded successfully", {
-            filename,
-            size: file.size,
-        });
+        try {
+            const result = await imagekit.upload({
+                file: base64File,
+                fileName: file.originalname,
+                folder: "/news-articles", // Aapka specific folder
+            });
 
-        return imageUrl;
+            logger.info("ImageKit upload successful", { url: result.url });
+
+            return result.url; // ImageKit se mila public URL return karein
+        } catch (error) {
+            logger.error("ImageKit upload failed", { error });
+            throw new Error("Failed to upload image to cloud storage");
+        }
     }
 
     // GET ARTICLES (public)
