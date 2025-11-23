@@ -1,11 +1,15 @@
+
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+
 }
+
 
 // User Role Enum
 enum UserRole {
@@ -14,6 +18,21 @@ enum UserRole {
     WRITER
     USER
     SUBSCRIBER
+}
+
+// Naya Enum: User Status Management ke liye
+enum UserStatus {
+  ACTIVE
+  BANNED
+}
+
+// Naya Enum: Comment Moderation ke liye
+enum CommentStatus {
+  APPROVED
+  PENDING
+  SPAM
+  ARCHIVED
+  DELETED
 }
 
 // Article Status Enum
@@ -34,6 +53,7 @@ model User {
     role         UserRole @default(USER)
     profileImage String?  @db.VarChar(255)
     bio          String?  @db.Text
+    status UserStatus @default(ACTIVE)
     isSuspended  Boolean  @default(false)
     createdAt    DateTime @default(now()) @map("created_at")
     updatedAt    DateTime @updatedAt @map("updated_at")
@@ -115,6 +135,8 @@ model Comment {
     isSpam     Boolean  @default(false)
     createdAt  DateTime @default(now()) @map("created_at")
     updatedAt  DateTime @updatedAt @map("updated_at")
+
+    status CommentStatus @default(PENDING)
 
     // Relationships
     articleId String

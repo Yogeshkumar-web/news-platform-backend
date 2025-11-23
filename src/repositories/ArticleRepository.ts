@@ -1,5 +1,5 @@
 import db from "../config/database";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "../generated/prisma/client";
 import {
     FindByAuthorOptions,
     FindCategoriesOptions,
@@ -13,7 +13,6 @@ type ArticleDb = any;
 type EditArticleDb = any;
 
 export class ArticleRepository {
-    // Existing methods...
     async countPublished(where: any = {}): Promise<number> {
         return db.article.count({ where: { status: "PUBLISHED", ...where } });
     }
@@ -104,25 +103,15 @@ export class ArticleRepository {
     }
 
     async bulkUpdateStatus(articleIds: string[], status: string) {
-        // Prisma's updateMany is used for efficient bulk operations
-        const result = await db.article.updateMany({
-            where: {
-                id: {
-                    in: articleIds,
-                },
-            },
+        return db.article.updateMany({
+            where: { id: { in: articleIds } },
             data: {
-                status: status as any, // Cast to any to handle Prisma enum typing
-                updatedAt: new Date(), // Update timestamp
+                status: status as any,
+                updatedAt: new Date(),
             },
         });
-
-        return result; // Returns { count: number }
     }
 
-    // NEW METHODS FOR ARTICLE MANAGEMENT
-
-    // Find article by ID
     async findById(id: string, select?: any) {
         return db.article.findUnique({
             where: { id },
@@ -155,7 +144,6 @@ export class ArticleRepository {
         });
     }
 
-    // Create new article
     async create(data: Prisma.ArticleCreateInput, select?: any) {
         return db.article.create({
             data,
@@ -187,7 +175,6 @@ export class ArticleRepository {
         });
     }
 
-    // Update article
     async update(id: string, data: Prisma.ArticleUpdateInput, select?: any) {
         return db.article.update({
             where: { id },
@@ -220,56 +207,55 @@ export class ArticleRepository {
         });
     }
 
-    // Delete article
     async delete(id: string) {
-        return db.article.delete({
-            where: { id },
-        });
+        return db.article.delete({ where: { id } });
     }
 
-    // Update article categories
+    // ✅ Fixed: no wrong typing on tx, and we cast internally
     async updateCategories(
         articleId: string,
         categoryKeys: string[]
     ): Promise<void> {
         await db.$transaction(async (tx) => {
-            // Remove existing categories
-            await tx.articleCategory.deleteMany({
+            const prisma = tx as any; // Pragmatic: avoid buggy TransactionClient typings
+
+            // Remove existing mappings
+            await prisma.articleCategory.deleteMany({
                 where: { articleId },
             });
 
-            // Add new categories
-            if (categoryKeys && categoryKeys.length > 0) {
-                // First, ensure categories exist
-                for (const key of categoryKeys) {
-                    await tx.category.upsert({
-                        where: { key },
-                        create: {
-                            key,
-                            label: key
-                                .replace(/-/g, " ")
-                                .replace(/\b\w/g, (l) => l.toUpperCase()),
-                            count: 1,
-                        },
-                        update: {
-                            count: { increment: 1 },
-                        },
-                    });
-                }
+            if (!categoryKeys || categoryKeys.length === 0) return;
 
-                // Then create article-category relationships
-                const categoryIds = await tx.category.findMany({
-                    where: { key: { in: categoryKeys } },
-                    select: { id: true, key: true },
-                });
-
-                await tx.articleCategory.createMany({
-                    data: categoryIds.map((category) => ({
-                        articleId,
-                        categoryId: category.id,
-                    })),
+            // Ensure categories exist / update counts
+            for (const key of categoryKeys) {
+                await prisma.category.upsert({
+                    where: { key },
+                    create: {
+                        key,
+                        label: key
+                            .replace(/-/g, " ")
+                            .replace(/\b\w/g, (l: string) => l.toUpperCase()),
+                        count: 1,
+                    },
+                    update: {
+                        count: { increment: 1 },
+                    },
                 });
             }
+
+            // Fetch category ids
+            const categoryIds = await prisma.category.findMany({
+                where: { key: { in: categoryKeys } },
+                select: { id: true },
+            });
+
+            // Create new relations
+            await prisma.articleCategory.createMany({
+                data: categoryIds.map((category: { id: string }) => ({
+                    articleId,
+                    categoryId: category.id,
+                })),
+            });
         });
     }
 
@@ -287,7 +273,6 @@ export class ArticleRepository {
         return db.category.findMany({ select, orderBy });
     }
 
-    // Get articles by author
     async findByAuthor(authorId: string, options: FindByAuthorOptions = {}) {
         const {
             skip = 0,
@@ -298,9 +283,7 @@ export class ArticleRepository {
         } = options;
 
         const where: any = { authorId };
-        if (status) {
-            where.status = status;
-        }
+        if (status) where.status = status;
 
         return db.article.findMany({
             where,
@@ -311,7 +294,6 @@ export class ArticleRepository {
         });
     }
 
-    // Search articles
     async search(query: string, options: SearchOptions = {}) {
         const {
             skip = 0,
@@ -336,7 +318,6 @@ export class ArticleRepository {
         });
     }
 
-    // Get featured articles
     async findFeatured(options: Omit<FindByAuthorOptions, "status"> = {}) {
         const {
             skip = 0,
@@ -357,7 +338,6 @@ export class ArticleRepository {
         });
     }
 
-    // Get popular articles (by view count)
     async findPopular(options: FindPopularOptions = {}) {
         const {
             skip = 0,

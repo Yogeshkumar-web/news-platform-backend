@@ -13,7 +13,6 @@ import {
     GetMyArticlesQuery,
     GetArticlesQuery,
 } from "../types";
-import { UserRole } from "@prisma/client";
 import { env } from "../config/environment";
 
 const imagekit = new ImageKit({

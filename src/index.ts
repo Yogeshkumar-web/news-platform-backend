@@ -123,7 +123,7 @@ class App {
         this.app.use("/api/categories", categoryRoutes);
         this.app.use("/api/comments", commentRoutes);
         this.app.use("/api/users", userRouter);
-        this.app.use("/api/status", statsRouter);
+        this.app.use("/api/stats", statsRouter);
 
         // API info endpoint
         this.app.get("/api", (req, res) => {

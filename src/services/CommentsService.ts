@@ -204,18 +204,31 @@ export class CommentsService {
             const total = await this.repo.countByArticleId("", false, false); // TODO: Implement user comment count
 
             return {
-                comments: comments.map((comment) => ({
-                    id: comment.id,
-                    content: comment.content,
-                    createdAt: comment.createdAt,
-                    updatedAt: comment.updatedAt,
-                    article: {
-                        id: comment.article.id,
-                        title: comment.article.title,
-                        slug: comment.article.slug,
-                        thumbnail: comment.article.thumbnail,
-                    },
-                })),
+                comments: comments.map(
+                    (comment: {
+                        id: any;
+                        content: any;
+                        createdAt: any;
+                        updatedAt: any;
+                        article: {
+                            id: any;
+                            title: any;
+                            slug: any;
+                            thumbnail: any;
+                        };
+                    }) => ({
+                        id: comment.id,
+                        content: comment.content,
+                        createdAt: comment.createdAt,
+                        updatedAt: comment.updatedAt,
+                        article: {
+                            id: comment.article.id,
+                            title: comment.article.title,
+                            slug: comment.article.slug,
+                            thumbnail: comment.article.thumbnail,
+                        },
+                    })
+                ),
                 pagination: buildPaginationMeta(
                     normalizedPage,
                     normalizedLimit,

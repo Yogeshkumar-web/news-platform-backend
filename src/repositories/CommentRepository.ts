@@ -1,5 +1,5 @@
 import db from "../config/database";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../generated/prisma/client";
 
 export class CommentsRepository {
     // Get comments for an article with user details
