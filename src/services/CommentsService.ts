@@ -3,6 +3,9 @@ import logger from "../utils/logger";
 import { NotFoundError, AuthorizationError, ValidationError } from "../types";
 import { CommentsRepository } from "../repositories/CommentRepository";
 
+type CommentStatus = "APPROVED" | "PENDING" | "SPAM" | "ARCHIVED" | "DELETED";
+type UserRole = "ADMIN" | "SUPERADMIN" | "WRITER" | "USER";
+
 export class CommentsService {
     private repo = new CommentsRepository();
 
@@ -279,6 +282,40 @@ export class CommentsService {
             });
             throw error;
         }
+    }
+
+    async moderateComment(
+        commentId: string,
+        newStatus: CommentStatus,
+        adminRole: UserRole
+    ) {
+        // Assuming findById exists in the repository
+        const comment = await this.repo.findById(commentId);
+
+        if (!comment) {
+            throw new NotFoundError("Comment not found", "COMMENT_NOT_FOUND");
+        }
+
+        // Prevent unnecessary database update
+        if (comment.status === newStatus) {
+            return comment;
+        }
+
+        // We assume all comments are subject to moderation by ADMIN/SUPERADMIN
+        // and no further complex authorization is needed here.
+
+        const updatedComment = await this.repo.updateStatus(
+            commentId,
+            newStatus
+        );
+
+        logger.info("Comment moderated successfully", {
+            commentId,
+            newStatus,
+            moderatedByRole: adminRole,
+        });
+
+        return updatedComment;
     }
 
     // Get recent comments (for dashboard)

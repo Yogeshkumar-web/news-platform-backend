@@ -570,4 +570,26 @@ export class ArticleService {
 
         return this.mapArticleDbToDto(articleRaw as ArticleDb);
     }
+
+    async bulkUpdateStatus(articleIds: string[], status: string) {
+        // Assuming ArticleRepository has a method to handle bulk update
+        // We update the status and the updatedAt timestamp
+        const result = await this.repo.bulkUpdateStatus(articleIds, status);
+
+        // Agar aap ArticleRepository ko modify nahi kar sakte,
+        // toh service mein direct db access se updateMany use karein.
+        /*
+        const result = await db.article.updateMany({
+            where: { id: { in: articleIds } },
+            data: { status: status as any, updatedAt: new Date() }
+        });
+        */
+
+        logger.info("Bulk article status updated", {
+            count: result.count,
+            newStatus: status,
+        });
+
+        return result.count;
+    }
 }

@@ -9,6 +9,9 @@ import {
     SearchOptions,
 } from "../types";
 
+type ArticleDb = any;
+type EditArticleDb = any;
+
 export class ArticleRepository {
     // Existing methods...
     async countPublished(where: any = {}): Promise<number> {
@@ -98,6 +101,23 @@ export class ArticleRepository {
                 _count: { select: { likes: true, comments: true } },
             },
         });
+    }
+
+    async bulkUpdateStatus(articleIds: string[], status: string) {
+        // Prisma's updateMany is used for efficient bulk operations
+        const result = await db.article.updateMany({
+            where: {
+                id: {
+                    in: articleIds,
+                },
+            },
+            data: {
+                status: status as any, // Cast to any to handle Prisma enum typing
+                updatedAt: new Date(), // Update timestamp
+            },
+        });
+
+        return result; // Returns { count: number }
     }
 
     // NEW METHODS FOR ARTICLE MANAGEMENT

@@ -21,6 +21,8 @@ import articleRoutes from "./routes/articlesRoute";
 import categoryRoutes from "./routes/categoryRoute";
 import authRoutes from "./routes/authRoute";
 import commentRoutes from "./routes/commentsRoute";
+import userRouter from "./routes/userRoute";
+import statsRouter from "./routes/statsRoute";
 
 class App {
     public app: Application;
@@ -120,6 +122,8 @@ class App {
         this.app.use("/api/articles", articleRoutes);
         this.app.use("/api/categories", categoryRoutes);
         this.app.use("/api/comments", commentRoutes);
+        this.app.use("/api/users", userRouter);
+        this.app.use("/api/status", statsRouter);
 
         // API info endpoint
         this.app.get("/api", (req, res) => {

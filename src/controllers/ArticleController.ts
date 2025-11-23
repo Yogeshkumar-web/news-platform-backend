@@ -228,4 +228,17 @@ export class ArticleController {
             );
         }
     );
+
+    bulkStatusUpdate = asyncHandler(async (req: Request, res: Response) => {
+        const { ids, status } = req.body;
+
+        // Middleware ensures 'ids' is an array of strings and 'status' is valid
+        const updatedCount = await articleService.bulkUpdateStatus(ids, status);
+
+        return ResponseHandler.success(
+            res,
+            { count: updatedCount },
+            `${updatedCount} articles status updated to ${status}`
+        );
+    });
 }

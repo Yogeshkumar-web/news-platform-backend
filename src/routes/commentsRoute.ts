@@ -33,6 +33,14 @@ router.get(
 // Protected routes - Require authentication
 router.use(authenticateToken);
 
+router.use(requireRole(["ADMIN", "SUPERADMIN"]));
+
+router.patch(
+    "/:id/status",
+    commentValidation.moderate,
+    handleValidationErrors,
+    commentsController.moderateComment
+);
 // Create comment (authenticated users only)
 router.post(
     "/",
@@ -66,8 +74,8 @@ router.get(
     commentsController.getUserComments
 );
 
-// Admin/Moderator only routes
-router.use(requireRole(["ADMIN", "MODERATOR"]));
+// // Admin/Moderator only routes
+// router.use(requireRole(["ADMIN", "MODERATOR"]));
 
 // Mark comment as spam
 router.post(

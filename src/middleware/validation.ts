@@ -318,6 +318,19 @@ export const articleValidation = {
             .isLength({ min: 1 })
             .withMessage("Article ID is required"),
     ],
+    bulkStatusUpdate: [
+        body("ids")
+            .isArray({ min: 1 })
+            .withMessage("Article IDs array is required"),
+        body("ids.*")
+            .isString()
+            .trim()
+            .isLength({ min: 1 })
+            .withMessage("Each ID must be a non-empty string"),
+        body("status")
+            .isIn(["DRAFT", "PUBLISHED", "ARCHIVED", "PENDING_REVIEW"])
+            .withMessage("Invalid status for bulk update"),
+    ],
 };
 
 export const commentValidation = {
@@ -456,7 +469,6 @@ export const commentValidation = {
             .withMessage("Limit must be between 1 and 50"),
     ],
 
-    // Moderate comment (spam/approve)
     moderate: [
         param("id")
             .isString()
@@ -465,6 +477,10 @@ export const commentValidation = {
             .withMessage("Valid comment ID is required")
             .matches(/^[a-zA-Z0-9_-]+$/)
             .withMessage("Comment ID contains invalid characters"),
+
+        body("status")
+            .isIn(["APPROVED", "PENDING", "SPAM", "ARCHIVED", "DELETED"])
+            .withMessage("Invalid status for comment moderation"),
     ],
 };
 
@@ -493,6 +509,41 @@ export const sanitizeCommentInput = (
 
 // Category-specific validation (more lenient than article slug)
 export const categoryValidation = {
+    // NEW: Create Category
+    createCategory: [
+        body("label")
+            .trim()
+            .isLength({ min: 2, max: 50 })
+            .withMessage("Category label must be between 2 and 50 characters")
+            .matches(/^[a-zA-Z0-9\s-]+$/)
+            .withMessage("Category label contains invalid characters"),
+    ],
+
+    // NEW: Update Category
+    updateCategory: [
+        param("id")
+            .isString()
+            .trim()
+            .isLength({ min: 1 })
+            .withMessage("Category ID is required"),
+        body("label")
+            .optional()
+            .trim()
+            .isLength({ min: 2, max: 50 })
+            .withMessage("Category label must be between 2 and 50 characters")
+            .matches(/^[a-zA-Z0-9\s-]+$/)
+            .withMessage("Category label contains invalid characters"),
+    ],
+
+    // NEW: Delete Category
+    deleteCategory: [
+        param("id")
+            .isString()
+            .trim()
+            .isLength({ min: 1 })
+            .withMessage("Category ID is required"),
+    ],
+
     getByCategory: [
         param("categoryName")
             .isString()
@@ -529,5 +580,62 @@ export const categoryValidation = {
             .optional()
             .isInt({ min: 1, max: 50 })
             .withMessage("Limit must be between 1 and 50"),
+    ],
+};
+
+export const userValidation = {
+    // 1. List Users with Pagination and Filters
+    getUsers: [
+        query("page")
+            .optional()
+            .isInt({ min: 1 })
+            .withMessage("Page must be a positive integer"),
+
+        query("pageSize")
+            .optional()
+            .isInt({ min: 1, max: 50 })
+            .withMessage("Page size must be between 1 and 50"),
+
+        query("role")
+            .optional()
+            .isIn(["ADMIN", "SUPERADMIN", "WRITER", "USER"]) // Assuming these roles exist
+            .withMessage("Invalid user role filter"),
+
+        query("status")
+            .optional()
+            .isIn(["ACTIVE", "BANNED"]) // Assuming User model has status: ACTIVE/BANNED
+            .withMessage("Invalid user status filter"),
+    ],
+
+    // 2. Update User Role
+    updateRole: [
+        param("id")
+            .isString()
+            .trim()
+            .isLength({ min: 1 })
+            .withMessage("User ID is required in URL parameter"),
+        body("role")
+            .isIn(["ADMIN", "SUPERADMIN", "WRITER", "USER"])
+            .withMessage("Invalid new role specified"),
+    ],
+
+    // 3. Ban/Unban User (Toggle Status)
+    toggleStatus: [
+        param("id")
+            .isString()
+            .trim()
+            .isLength({ min: 1 })
+            .withMessage("User ID is required in URL parameter"),
+        body("status")
+            .isIn(["ACTIVE", "BANNED"])
+            .withMessage("Invalid status specified (must be ACTIVE or BANNED)"),
+    ],
+
+    getById: [
+        param("id")
+            .isString()
+            .trim()
+            .isLength({ min: 1 })
+            .withMessage("User ID is required"),
     ],
 };

@@ -348,4 +348,22 @@ export class CommentsRepository {
             },
         });
     }
+
+    async updateStatus(commentId: string, status: string) {
+        const updatedComment = await db.comment.update({
+            where: { id: commentId },
+            data: {
+                status: status as any,
+                updatedAt: new Date(),
+            },
+            select: {
+                id: true,
+                content: true,
+                status: true,
+                createdAt: true,
+                // Include other necessary fields for the service layer DTO
+            },
+        });
+        return updatedComment;
+    }
 }

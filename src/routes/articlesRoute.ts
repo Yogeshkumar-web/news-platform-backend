@@ -14,33 +14,6 @@ import {
 const router = Router();
 const controller = new ArticleController();
 
-// Ensure upload directory exists
-const uploadDir = path.join(process.cwd(), "uploads/images");
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Configure multer for image uploads with TypeScript support
-// const storage = multer.diskStorage({
-//     destination: (
-//         req: Request,
-//         file: Express.Multer.File,
-//         cb: (error: Error | null, destination: string) => void
-//     ) => {
-//         cb(null, uploadDir);
-//     },
-//     filename: (
-//         req: Request,
-//         file: Express.Multer.File,
-//         cb: (error: Error | null, filename: string) => void
-//     ) => {
-//         // Generate unique filename
-//         const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-//         const ext = path.extname(file.originalname);
-//         cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-//     },
-// });
-
 const storage = multer.memoryStorage();
 
 const fileFilter = (
@@ -58,7 +31,7 @@ const fileFilter = (
 const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB limit
+        fileSize: 5 * 1024 * 1024,
     },
     fileFilter: fileFilter,
 });
@@ -208,6 +181,15 @@ router.get(
     articleValidation.getBySlug,
     handleValidationErrors,
     controller.getArticleBySlug
+);
+
+router.patch(
+    "/admin/bulk-status",
+    authenticateToken,
+    requireRole(["ADMIN", "SUPERADMIN"]),
+    articleValidation.bulkStatusUpdate,
+    handleValidationErrors,
+    controller.bulkStatusUpdate
 );
 
 export default router;

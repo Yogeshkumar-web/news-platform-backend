@@ -10,6 +10,7 @@ import {
     ValidationError,
 } from "../types";
 import logger from "../utils/logger";
+import ImageKit from "imagekit";
 
 export interface UpdateProfileData {
     name?: string;
@@ -33,6 +34,13 @@ export interface LoginData {
     email: string;
     password: string;
 }
+
+// ImageKit Instance Initialization
+const imagekit = new ImageKit({
+    publicKey: env.IMAGEKIT_PUBLIC_KEY as string,
+    privateKey: env.IMAGEKIT_PRIVATE_KEY as string,
+    urlEndpoint: env.IMAGEKIT_URL_ENDPOINT as string,
+});
 
 export class AuthService {
     /**
@@ -227,24 +235,30 @@ export class AuthService {
         return updatedUser;
     }
 
-    /**
-     * Handles profile avatar upload. Returns the constructed URL.
-     */
     async uploadAvatar(file?: Express.Multer.File): Promise<string> {
         if (!file) {
             throw new ValidationError("No file provided", "NO_FILE");
         }
 
-        // URL is based on filename logic in authRoute.ts
-        const filename = file.filename;
-        const imageUrl = `/uploads/avatars/${filename}`;
+        // Convert file buffer (from memory storage) to Base64 for ImageKit
+        const base64File = file.buffer.toString("base64");
 
-        logger.info("Avatar uploaded successfully", {
-            filename,
-            size: file.size,
-        });
+        try {
+            const result = await imagekit.upload({
+                file: base64File,
+                fileName: `avatar-${Date.now()}-${file.originalname}`,
+                folder: "/user-avatars", // Dedicated folder on ImageKit
+            });
 
-        return imageUrl;
+            logger.info("ImageKit avatar upload successful", {
+                url: result.url,
+            });
+
+            return result.url; // <--- RETURNS FULL IMAGEKIT URL
+        } catch (error) {
+            logger.error("ImageKit avatar upload failed", { error });
+            throw new Error("Failed to upload avatar to cloud storage");
+        }
     }
 
     /**

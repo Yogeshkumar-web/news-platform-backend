@@ -43,6 +43,28 @@ export class CommentsController {
         );
     });
 
+    moderateComment = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const commentId = req.params.id;
+            const newStatus = req.body.status as any;
+            const adminRole = req.user?.role as any;
+
+            // Middleware handles primary authentication and role check.
+
+            const updatedComment = await this.commentsService.moderateComment(
+                commentId,
+                newStatus,
+                adminRole
+            );
+
+            return ResponseHandler.success(
+                res,
+                updatedComment,
+                `Comment status updated to ${newStatus}`
+            );
+        }
+    );
+
     // POST /api/comments - Create a new comment (authenticated)
     createComment = asyncHandler(
         async (req: AuthenticatedRequest, res: Response) => {
