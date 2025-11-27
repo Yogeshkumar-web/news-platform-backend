@@ -1,11 +1,12 @@
 import { StatsRepository } from "../repositories/StatsRepository";
+import { DashboardStats } from "../types";
 import logger from "../utils/logger";
 
 export class StatsService {
-    private repo: StatsRepository;
+    private statsRepository: StatsRepository;
 
     constructor() {
-        this.repo = new StatsRepository();
+        this.statsRepository = new StatsRepository();
     }
 
     /**
@@ -20,11 +21,11 @@ export class StatsService {
             categoryCount,
             commentCountsRaw,
         ] = await Promise.all([
-            this.repo.getUserCounts(),
-            this.repo.getArticleCounts(),
-            this.repo.getTotalViews(),
-            this.repo.getCategoryCount(),
-            this.repo.getCommentCounts(),
+            this.statsRepository.getUserCounts(),
+            this.statsRepository.getArticleCounts(),
+            this.statsRepository.getTotalViews(),
+            this.statsRepository.getCategoryCount(),
+            this.statsRepository.getCommentCounts(),
         ]);
 
         // Function to transform grouped arrays into a key-value object
@@ -67,6 +68,43 @@ export class StatsService {
             comments,
             categories,
             lastUpdated: new Date().toISOString(),
+        };
+    }
+
+    async getDashboardStats(role: string): Promise<DashboardStats> {
+        // Example logic:
+        const totalArticles = await this.statsRepository.countTotalArticles();
+        const publishedArticles =
+            await this.statsRepository.countPublishedArticles();
+        const totalUsers = await this.statsRepository.countTotalUsers();
+
+        let stats: DashboardStats = {
+            totalArticles,
+            publishedArticles,
+            draftArticles: totalArticles - publishedArticles, // Simple calculation
+            pendingReviews: await this.statsRepository.countPendingReviews(),
+            totalUsers,
+            activeUsers: await this.statsRepository.countActiveUsers(),
+        };
+
+        // SUPERADMIN ke liye additional stats
+        if (role === "SUPERADMIN") {
+            stats.premiumArticleCount =
+                await this.statsRepository.countPremiumArticles();
+            stats.systemHealth = "OK"; // Simple health check
+        }
+
+        return stats;
+    }
+
+    // Task 3.2: Get SUPERADMIN system config/data
+    async getSystemConfig() {
+        // Yahan sensitive config data, logs, ya advanced system stats return honge.
+        return {
+            logRetentionDays: 30,
+            databaseVersion: "15.4",
+            activeConnections: 5,
+            lastBackup: new Date().toISOString(),
         };
     }
 }

@@ -1,8 +1,6 @@
 import { Router } from "express";
 import { AuthController } from "../controllers/AuthController";
 import multer from "multer";
-import path from "path";
-import fs from "fs";
 import { Request } from "express";
 import {
     authValidation,
@@ -59,6 +57,10 @@ router.post(
     handleValidationErrors,
     authController.login
 );
+
+// NEW: Email Verification Routes
+router.post("/verify-email", authController.verifyEmail);
+router.post("/resend-verification", authController.resendVerificationEmail);
 
 // Get current user profile (protected)
 router.get("/me", authenticateToken, authController.getProfile);

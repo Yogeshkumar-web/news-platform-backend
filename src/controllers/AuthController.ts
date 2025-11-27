@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { AuthService } from "../services/AuthService";
 import { ResponseHandler } from "../utils/response";
 import { env } from "../config/environment";
-import { AuthenticatedRequest } from "../types";
+import { AuthenticatedRequest, ValidationError } from "../types";
 import { asyncHandler } from "../utils/asyncHandler";
 
 export class AuthController {
@@ -56,6 +56,44 @@ export class AuthController {
                 { user: result.user },
                 "Login successful"
             );
+        }
+    );
+
+    verifyEmail = asyncHandler(async (req: Request, res: Response) => {
+        const rawToken = req.body.token || req.query.token; // Accepts token in body or query
+
+        if (!rawToken) {
+            throw new ValidationError(
+                "Verification token is missing.",
+                "TOKEN_MISSING"
+            );
+        }
+
+        const result = await this.authService.verifyUser(rawToken);
+
+        return ResponseHandler.success(res, null, result.message);
+    });
+
+    /**
+     * POST /api/auth/resend-verification
+     */
+    resendVerificationEmail = asyncHandler(
+        async (req: Request, res: Response) => {
+            const { email } = req.body;
+
+            if (!email) {
+                throw new ValidationError(
+                    "Email address is required to resend the link.",
+                    "EMAIL_REQUIRED"
+                );
+            }
+
+            const result = await this.authService.resendVerificationEmail(
+                email
+            );
+
+            // Security: Always return a generic success message
+            return ResponseHandler.success(res, null, result.message);
         }
     );
 

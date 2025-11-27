@@ -26,11 +26,42 @@ export interface PaginationMeta {
     hasPrev: boolean;
 }
 
+// NEW: All possible user roles
+export type UserRole =
+    | "USER"
+    | "WRITER"
+    | "ADMIN"
+    | "SUPERADMIN"
+    | "SUBSCRIBER";
+
+// NEW: Subscription information interface
+export interface SubscriptionInfo {
+    status: "ACTIVE" | "INACTIVE" | "TRIAL" | "CANCELED";
+    planId: string;
+    startDate: Date;
+    endDate: Date;
+    isAutoRenew: boolean;
+}
+
+// NEW: Interface for authenticated users including subscription info
+export interface UserWithSubscription {
+    id: string;
+    email: string;
+    name: string;
+    role: UserRole;
+    bio?: string; // Phase 4 ke liye add kiya
+    // NEW: Subscription status token mein
+    isSubscriber: boolean;
+    // NEW: Full subscription object
+    subscription?: SubscriptionInfo;
+}
+
 export interface AuthTokenPayload {
     id: string;
     email: string;
     name: string;
-    role: string;
+    role: UserRole;
+    isSubscriber: boolean;
     iat?: number;
     exp?: number;
 }
@@ -38,6 +69,19 @@ export interface AuthTokenPayload {
 export interface AuthenticatedRequest extends Request {
     user?: AuthTokenPayload;
     traceId?: string;
+}
+
+// NEW: Type for Dashboard Stats (Phase 3 ke liye)
+export interface DashboardStats {
+    totalArticles: number;
+    publishedArticles: number;
+    draftArticles: number;
+    pendingReviews: number;
+    totalUsers: number;
+    activeUsers: number;
+    // SuperAdmin ke liye additional stats
+    premiumArticleCount?: number;
+    systemHealth?: "OK" | "DEGRADED";
 }
 
 // Custom Error Classes
@@ -105,6 +149,16 @@ export interface CreateArticleData {
     isPremium?: boolean;
     categories?: string[];
     authorId: string;
+}
+
+export class InternalError extends AppError {
+    constructor(
+        message: string = "Internal Server Error. Please try again later.",
+        code: string = "INTERNAL_SERVER_ERROR"
+    ) {
+        // Status Code 500
+        super(message, 500, code);
+    }
 }
 
 export interface UpdateArticleData {

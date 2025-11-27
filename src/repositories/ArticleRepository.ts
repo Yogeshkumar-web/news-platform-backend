@@ -13,6 +13,52 @@ type ArticleDb = any;
 type EditArticleDb = any;
 
 export class ArticleRepository {
+    async getSavedArticlesByUser(
+        userId: string,
+        page: number,
+        pageSize: number
+    ) {
+        const skip = (page - 1) * pageSize;
+
+        const [articles, total] = await db.$transaction([
+            db.article.findMany({
+                where: {
+                    // Check the many-to-many relationship jo humne schema.prisma mein set kiya
+                    savedByUsers: {
+                        some: {
+                            id: userId,
+                        },
+                    },
+                },
+                skip: skip,
+                take: pageSize,
+                orderBy: { createdAt: "desc" },
+                // List view ke liye zaroori fields select karein
+                select: {
+                    id: true,
+                    title: true,
+                    slug: true,
+                    excerpt: true,
+                    thumbnail: true,
+                    isPremium: true,
+                    createdAt: true,
+                    author: { select: { name: true } },
+                },
+            }),
+            db.article.count({
+                where: {
+                    savedByUsers: {
+                        some: {
+                            id: userId,
+                        },
+                    },
+                },
+            }),
+        ]);
+
+        return { articles, total };
+    }
+
     async countPublished(where: any = {}): Promise<number> {
         return db.article.count({ where: { status: "PUBLISHED", ...where } });
     }

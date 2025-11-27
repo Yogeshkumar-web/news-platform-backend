@@ -304,6 +304,7 @@ export type ArticleWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Article"> | Date | string
   publishedAt?: Prisma.DateTimeNullableFilter<"Article"> | Date | string | null
   authorId?: Prisma.StringFilter<"Article"> | string
+  savedByUsers?: Prisma.UserListRelationFilter
   author?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   comments?: Prisma.CommentListRelationFilter
   likes?: Prisma.LikeListRelationFilter
@@ -327,6 +328,7 @@ export type ArticleOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   authorId?: Prisma.SortOrder
+  savedByUsers?: Prisma.UserOrderByRelationAggregateInput
   author?: Prisma.UserOrderByWithRelationInput
   comments?: Prisma.CommentOrderByRelationAggregateInput
   likes?: Prisma.LikeOrderByRelationAggregateInput
@@ -353,6 +355,7 @@ export type ArticleWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Article"> | Date | string
   publishedAt?: Prisma.DateTimeNullableFilter<"Article"> | Date | string | null
   authorId?: Prisma.StringFilter<"Article"> | string
+  savedByUsers?: Prisma.UserListRelationFilter
   author?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   comments?: Prisma.CommentListRelationFilter
   likes?: Prisma.LikeListRelationFilter
@@ -421,6 +424,7 @@ export type ArticleCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   publishedAt?: Date | string | null
+  savedByUsers?: Prisma.UserCreateNestedManyWithoutSavedArticlesInput
   author: Prisma.UserCreateNestedOneWithoutArticlesInput
   comments?: Prisma.CommentCreateNestedManyWithoutArticleInput
   likes?: Prisma.LikeCreateNestedManyWithoutArticleInput
@@ -444,6 +448,7 @@ export type ArticleUncheckedCreateInput = {
   updatedAt?: Date | string
   publishedAt?: Date | string | null
   authorId: string
+  savedByUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSavedArticlesInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutArticleInput
   likes?: Prisma.LikeUncheckedCreateNestedManyWithoutArticleInput
   articleCategories?: Prisma.ArticleCategoryUncheckedCreateNestedManyWithoutArticleInput
@@ -465,6 +470,7 @@ export type ArticleUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  savedByUsers?: Prisma.UserUpdateManyWithoutSavedArticlesNestedInput
   author?: Prisma.UserUpdateOneRequiredWithoutArticlesNestedInput
   comments?: Prisma.CommentUpdateManyWithoutArticleNestedInput
   likes?: Prisma.LikeUpdateManyWithoutArticleNestedInput
@@ -488,6 +494,7 @@ export type ArticleUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   authorId?: Prisma.StringFieldUpdateOperationsInput | string
+  savedByUsers?: Prisma.UserUncheckedUpdateManyWithoutSavedArticlesNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutArticleNestedInput
   likes?: Prisma.LikeUncheckedUpdateManyWithoutArticleNestedInput
   articleCategories?: Prisma.ArticleCategoryUncheckedUpdateManyWithoutArticleNestedInput
@@ -629,10 +636,22 @@ export type ArticleScalarRelationFilter = {
   isNot?: Prisma.ArticleWhereInput
 }
 
+export type ArticleCreateNestedManyWithoutSavedByUsersInput = {
+  create?: Prisma.XOR<Prisma.ArticleCreateWithoutSavedByUsersInput, Prisma.ArticleUncheckedCreateWithoutSavedByUsersInput> | Prisma.ArticleCreateWithoutSavedByUsersInput[] | Prisma.ArticleUncheckedCreateWithoutSavedByUsersInput[]
+  connectOrCreate?: Prisma.ArticleCreateOrConnectWithoutSavedByUsersInput | Prisma.ArticleCreateOrConnectWithoutSavedByUsersInput[]
+  connect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
+}
+
 export type ArticleCreateNestedManyWithoutAuthorInput = {
   create?: Prisma.XOR<Prisma.ArticleCreateWithoutAuthorInput, Prisma.ArticleUncheckedCreateWithoutAuthorInput> | Prisma.ArticleCreateWithoutAuthorInput[] | Prisma.ArticleUncheckedCreateWithoutAuthorInput[]
   connectOrCreate?: Prisma.ArticleCreateOrConnectWithoutAuthorInput | Prisma.ArticleCreateOrConnectWithoutAuthorInput[]
   createMany?: Prisma.ArticleCreateManyAuthorInputEnvelope
+  connect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
+}
+
+export type ArticleUncheckedCreateNestedManyWithoutSavedByUsersInput = {
+  create?: Prisma.XOR<Prisma.ArticleCreateWithoutSavedByUsersInput, Prisma.ArticleUncheckedCreateWithoutSavedByUsersInput> | Prisma.ArticleCreateWithoutSavedByUsersInput[] | Prisma.ArticleUncheckedCreateWithoutSavedByUsersInput[]
+  connectOrCreate?: Prisma.ArticleCreateOrConnectWithoutSavedByUsersInput | Prisma.ArticleCreateOrConnectWithoutSavedByUsersInput[]
   connect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
 }
 
@@ -641,6 +660,19 @@ export type ArticleUncheckedCreateNestedManyWithoutAuthorInput = {
   connectOrCreate?: Prisma.ArticleCreateOrConnectWithoutAuthorInput | Prisma.ArticleCreateOrConnectWithoutAuthorInput[]
   createMany?: Prisma.ArticleCreateManyAuthorInputEnvelope
   connect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
+}
+
+export type ArticleUpdateManyWithoutSavedByUsersNestedInput = {
+  create?: Prisma.XOR<Prisma.ArticleCreateWithoutSavedByUsersInput, Prisma.ArticleUncheckedCreateWithoutSavedByUsersInput> | Prisma.ArticleCreateWithoutSavedByUsersInput[] | Prisma.ArticleUncheckedCreateWithoutSavedByUsersInput[]
+  connectOrCreate?: Prisma.ArticleCreateOrConnectWithoutSavedByUsersInput | Prisma.ArticleCreateOrConnectWithoutSavedByUsersInput[]
+  upsert?: Prisma.ArticleUpsertWithWhereUniqueWithoutSavedByUsersInput | Prisma.ArticleUpsertWithWhereUniqueWithoutSavedByUsersInput[]
+  set?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
+  disconnect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
+  delete?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
+  connect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
+  update?: Prisma.ArticleUpdateWithWhereUniqueWithoutSavedByUsersInput | Prisma.ArticleUpdateWithWhereUniqueWithoutSavedByUsersInput[]
+  updateMany?: Prisma.ArticleUpdateManyWithWhereWithoutSavedByUsersInput | Prisma.ArticleUpdateManyWithWhereWithoutSavedByUsersInput[]
+  deleteMany?: Prisma.ArticleScalarWhereInput | Prisma.ArticleScalarWhereInput[]
 }
 
 export type ArticleUpdateManyWithoutAuthorNestedInput = {
@@ -654,6 +686,19 @@ export type ArticleUpdateManyWithoutAuthorNestedInput = {
   connect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
   update?: Prisma.ArticleUpdateWithWhereUniqueWithoutAuthorInput | Prisma.ArticleUpdateWithWhereUniqueWithoutAuthorInput[]
   updateMany?: Prisma.ArticleUpdateManyWithWhereWithoutAuthorInput | Prisma.ArticleUpdateManyWithWhereWithoutAuthorInput[]
+  deleteMany?: Prisma.ArticleScalarWhereInput | Prisma.ArticleScalarWhereInput[]
+}
+
+export type ArticleUncheckedUpdateManyWithoutSavedByUsersNestedInput = {
+  create?: Prisma.XOR<Prisma.ArticleCreateWithoutSavedByUsersInput, Prisma.ArticleUncheckedCreateWithoutSavedByUsersInput> | Prisma.ArticleCreateWithoutSavedByUsersInput[] | Prisma.ArticleUncheckedCreateWithoutSavedByUsersInput[]
+  connectOrCreate?: Prisma.ArticleCreateOrConnectWithoutSavedByUsersInput | Prisma.ArticleCreateOrConnectWithoutSavedByUsersInput[]
+  upsert?: Prisma.ArticleUpsertWithWhereUniqueWithoutSavedByUsersInput | Prisma.ArticleUpsertWithWhereUniqueWithoutSavedByUsersInput[]
+  set?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
+  disconnect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
+  delete?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
+  connect?: Prisma.ArticleWhereUniqueInput | Prisma.ArticleWhereUniqueInput[]
+  update?: Prisma.ArticleUpdateWithWhereUniqueWithoutSavedByUsersInput | Prisma.ArticleUpdateWithWhereUniqueWithoutSavedByUsersInput[]
+  updateMany?: Prisma.ArticleUpdateManyWithWhereWithoutSavedByUsersInput | Prisma.ArticleUpdateManyWithWhereWithoutSavedByUsersInput[]
   deleteMany?: Prisma.ArticleScalarWhereInput | Prisma.ArticleScalarWhereInput[]
 }
 
@@ -729,6 +774,55 @@ export type ArticleUpdateOneRequiredWithoutLikesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ArticleUpdateToOneWithWhereWithoutLikesInput, Prisma.ArticleUpdateWithoutLikesInput>, Prisma.ArticleUncheckedUpdateWithoutLikesInput>
 }
 
+export type ArticleCreateWithoutSavedByUsersInput = {
+  id?: string
+  title: string
+  slug: string
+  excerpt?: string | null
+  content: string
+  contentJson?: string | null
+  contentType?: string
+  status?: $Enums.ArticleStatus
+  thumbnail?: string | null
+  featured?: boolean
+  viewCount?: number
+  isPremium?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  publishedAt?: Date | string | null
+  author: Prisma.UserCreateNestedOneWithoutArticlesInput
+  comments?: Prisma.CommentCreateNestedManyWithoutArticleInput
+  likes?: Prisma.LikeCreateNestedManyWithoutArticleInput
+  articleCategories?: Prisma.ArticleCategoryCreateNestedManyWithoutArticleInput
+}
+
+export type ArticleUncheckedCreateWithoutSavedByUsersInput = {
+  id?: string
+  title: string
+  slug: string
+  excerpt?: string | null
+  content: string
+  contentJson?: string | null
+  contentType?: string
+  status?: $Enums.ArticleStatus
+  thumbnail?: string | null
+  featured?: boolean
+  viewCount?: number
+  isPremium?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  publishedAt?: Date | string | null
+  authorId: string
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutArticleInput
+  likes?: Prisma.LikeUncheckedCreateNestedManyWithoutArticleInput
+  articleCategories?: Prisma.ArticleCategoryUncheckedCreateNestedManyWithoutArticleInput
+}
+
+export type ArticleCreateOrConnectWithoutSavedByUsersInput = {
+  where: Prisma.ArticleWhereUniqueInput
+  create: Prisma.XOR<Prisma.ArticleCreateWithoutSavedByUsersInput, Prisma.ArticleUncheckedCreateWithoutSavedByUsersInput>
+}
+
 export type ArticleCreateWithoutAuthorInput = {
   id?: string
   title: string
@@ -745,6 +839,7 @@ export type ArticleCreateWithoutAuthorInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   publishedAt?: Date | string | null
+  savedByUsers?: Prisma.UserCreateNestedManyWithoutSavedArticlesInput
   comments?: Prisma.CommentCreateNestedManyWithoutArticleInput
   likes?: Prisma.LikeCreateNestedManyWithoutArticleInput
   articleCategories?: Prisma.ArticleCategoryCreateNestedManyWithoutArticleInput
@@ -766,6 +861,7 @@ export type ArticleUncheckedCreateWithoutAuthorInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   publishedAt?: Date | string | null
+  savedByUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSavedArticlesInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutArticleInput
   likes?: Prisma.LikeUncheckedCreateNestedManyWithoutArticleInput
   articleCategories?: Prisma.ArticleCategoryUncheckedCreateNestedManyWithoutArticleInput
@@ -781,20 +877,20 @@ export type ArticleCreateManyAuthorInputEnvelope = {
   skipDuplicates?: boolean
 }
 
-export type ArticleUpsertWithWhereUniqueWithoutAuthorInput = {
+export type ArticleUpsertWithWhereUniqueWithoutSavedByUsersInput = {
   where: Prisma.ArticleWhereUniqueInput
-  update: Prisma.XOR<Prisma.ArticleUpdateWithoutAuthorInput, Prisma.ArticleUncheckedUpdateWithoutAuthorInput>
-  create: Prisma.XOR<Prisma.ArticleCreateWithoutAuthorInput, Prisma.ArticleUncheckedCreateWithoutAuthorInput>
+  update: Prisma.XOR<Prisma.ArticleUpdateWithoutSavedByUsersInput, Prisma.ArticleUncheckedUpdateWithoutSavedByUsersInput>
+  create: Prisma.XOR<Prisma.ArticleCreateWithoutSavedByUsersInput, Prisma.ArticleUncheckedCreateWithoutSavedByUsersInput>
 }
 
-export type ArticleUpdateWithWhereUniqueWithoutAuthorInput = {
+export type ArticleUpdateWithWhereUniqueWithoutSavedByUsersInput = {
   where: Prisma.ArticleWhereUniqueInput
-  data: Prisma.XOR<Prisma.ArticleUpdateWithoutAuthorInput, Prisma.ArticleUncheckedUpdateWithoutAuthorInput>
+  data: Prisma.XOR<Prisma.ArticleUpdateWithoutSavedByUsersInput, Prisma.ArticleUncheckedUpdateWithoutSavedByUsersInput>
 }
 
-export type ArticleUpdateManyWithWhereWithoutAuthorInput = {
+export type ArticleUpdateManyWithWhereWithoutSavedByUsersInput = {
   where: Prisma.ArticleScalarWhereInput
-  data: Prisma.XOR<Prisma.ArticleUpdateManyMutationInput, Prisma.ArticleUncheckedUpdateManyWithoutAuthorInput>
+  data: Prisma.XOR<Prisma.ArticleUpdateManyMutationInput, Prisma.ArticleUncheckedUpdateManyWithoutSavedByUsersInput>
 }
 
 export type ArticleScalarWhereInput = {
@@ -819,6 +915,22 @@ export type ArticleScalarWhereInput = {
   authorId?: Prisma.StringFilter<"Article"> | string
 }
 
+export type ArticleUpsertWithWhereUniqueWithoutAuthorInput = {
+  where: Prisma.ArticleWhereUniqueInput
+  update: Prisma.XOR<Prisma.ArticleUpdateWithoutAuthorInput, Prisma.ArticleUncheckedUpdateWithoutAuthorInput>
+  create: Prisma.XOR<Prisma.ArticleCreateWithoutAuthorInput, Prisma.ArticleUncheckedCreateWithoutAuthorInput>
+}
+
+export type ArticleUpdateWithWhereUniqueWithoutAuthorInput = {
+  where: Prisma.ArticleWhereUniqueInput
+  data: Prisma.XOR<Prisma.ArticleUpdateWithoutAuthorInput, Prisma.ArticleUncheckedUpdateWithoutAuthorInput>
+}
+
+export type ArticleUpdateManyWithWhereWithoutAuthorInput = {
+  where: Prisma.ArticleScalarWhereInput
+  data: Prisma.XOR<Prisma.ArticleUpdateManyMutationInput, Prisma.ArticleUncheckedUpdateManyWithoutAuthorInput>
+}
+
 export type ArticleCreateWithoutArticleCategoriesInput = {
   id?: string
   title: string
@@ -835,6 +947,7 @@ export type ArticleCreateWithoutArticleCategoriesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   publishedAt?: Date | string | null
+  savedByUsers?: Prisma.UserCreateNestedManyWithoutSavedArticlesInput
   author: Prisma.UserCreateNestedOneWithoutArticlesInput
   comments?: Prisma.CommentCreateNestedManyWithoutArticleInput
   likes?: Prisma.LikeCreateNestedManyWithoutArticleInput
@@ -857,6 +970,7 @@ export type ArticleUncheckedCreateWithoutArticleCategoriesInput = {
   updatedAt?: Date | string
   publishedAt?: Date | string | null
   authorId: string
+  savedByUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSavedArticlesInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutArticleInput
   likes?: Prisma.LikeUncheckedCreateNestedManyWithoutArticleInput
 }
@@ -893,6 +1007,7 @@ export type ArticleUpdateWithoutArticleCategoriesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  savedByUsers?: Prisma.UserUpdateManyWithoutSavedArticlesNestedInput
   author?: Prisma.UserUpdateOneRequiredWithoutArticlesNestedInput
   comments?: Prisma.CommentUpdateManyWithoutArticleNestedInput
   likes?: Prisma.LikeUpdateManyWithoutArticleNestedInput
@@ -915,6 +1030,7 @@ export type ArticleUncheckedUpdateWithoutArticleCategoriesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   authorId?: Prisma.StringFieldUpdateOperationsInput | string
+  savedByUsers?: Prisma.UserUncheckedUpdateManyWithoutSavedArticlesNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutArticleNestedInput
   likes?: Prisma.LikeUncheckedUpdateManyWithoutArticleNestedInput
 }
@@ -935,6 +1051,7 @@ export type ArticleCreateWithoutCommentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   publishedAt?: Date | string | null
+  savedByUsers?: Prisma.UserCreateNestedManyWithoutSavedArticlesInput
   author: Prisma.UserCreateNestedOneWithoutArticlesInput
   likes?: Prisma.LikeCreateNestedManyWithoutArticleInput
   articleCategories?: Prisma.ArticleCategoryCreateNestedManyWithoutArticleInput
@@ -957,6 +1074,7 @@ export type ArticleUncheckedCreateWithoutCommentsInput = {
   updatedAt?: Date | string
   publishedAt?: Date | string | null
   authorId: string
+  savedByUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSavedArticlesInput
   likes?: Prisma.LikeUncheckedCreateNestedManyWithoutArticleInput
   articleCategories?: Prisma.ArticleCategoryUncheckedCreateNestedManyWithoutArticleInput
 }
@@ -993,6 +1111,7 @@ export type ArticleUpdateWithoutCommentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  savedByUsers?: Prisma.UserUpdateManyWithoutSavedArticlesNestedInput
   author?: Prisma.UserUpdateOneRequiredWithoutArticlesNestedInput
   likes?: Prisma.LikeUpdateManyWithoutArticleNestedInput
   articleCategories?: Prisma.ArticleCategoryUpdateManyWithoutArticleNestedInput
@@ -1015,6 +1134,7 @@ export type ArticleUncheckedUpdateWithoutCommentsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   authorId?: Prisma.StringFieldUpdateOperationsInput | string
+  savedByUsers?: Prisma.UserUncheckedUpdateManyWithoutSavedArticlesNestedInput
   likes?: Prisma.LikeUncheckedUpdateManyWithoutArticleNestedInput
   articleCategories?: Prisma.ArticleCategoryUncheckedUpdateManyWithoutArticleNestedInput
 }
@@ -1035,6 +1155,7 @@ export type ArticleCreateWithoutLikesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   publishedAt?: Date | string | null
+  savedByUsers?: Prisma.UserCreateNestedManyWithoutSavedArticlesInput
   author: Prisma.UserCreateNestedOneWithoutArticlesInput
   comments?: Prisma.CommentCreateNestedManyWithoutArticleInput
   articleCategories?: Prisma.ArticleCategoryCreateNestedManyWithoutArticleInput
@@ -1057,6 +1178,7 @@ export type ArticleUncheckedCreateWithoutLikesInput = {
   updatedAt?: Date | string
   publishedAt?: Date | string | null
   authorId: string
+  savedByUsers?: Prisma.UserUncheckedCreateNestedManyWithoutSavedArticlesInput
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutArticleInput
   articleCategories?: Prisma.ArticleCategoryUncheckedCreateNestedManyWithoutArticleInput
 }
@@ -1093,6 +1215,7 @@ export type ArticleUpdateWithoutLikesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  savedByUsers?: Prisma.UserUpdateManyWithoutSavedArticlesNestedInput
   author?: Prisma.UserUpdateOneRequiredWithoutArticlesNestedInput
   comments?: Prisma.CommentUpdateManyWithoutArticleNestedInput
   articleCategories?: Prisma.ArticleCategoryUpdateManyWithoutArticleNestedInput
@@ -1115,6 +1238,7 @@ export type ArticleUncheckedUpdateWithoutLikesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   authorId?: Prisma.StringFieldUpdateOperationsInput | string
+  savedByUsers?: Prisma.UserUncheckedUpdateManyWithoutSavedArticlesNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutArticleNestedInput
   articleCategories?: Prisma.ArticleCategoryUncheckedUpdateManyWithoutArticleNestedInput
 }
@@ -1137,6 +1261,69 @@ export type ArticleCreateManyAuthorInput = {
   publishedAt?: Date | string | null
 }
 
+export type ArticleUpdateWithoutSavedByUsersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  excerpt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contentType?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumArticleStatusFieldUpdateOperationsInput | $Enums.ArticleStatus
+  thumbnail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  featured?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  author?: Prisma.UserUpdateOneRequiredWithoutArticlesNestedInput
+  comments?: Prisma.CommentUpdateManyWithoutArticleNestedInput
+  likes?: Prisma.LikeUpdateManyWithoutArticleNestedInput
+  articleCategories?: Prisma.ArticleCategoryUpdateManyWithoutArticleNestedInput
+}
+
+export type ArticleUncheckedUpdateWithoutSavedByUsersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  excerpt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contentType?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumArticleStatusFieldUpdateOperationsInput | $Enums.ArticleStatus
+  thumbnail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  featured?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  authorId?: Prisma.StringFieldUpdateOperationsInput | string
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutArticleNestedInput
+  likes?: Prisma.LikeUncheckedUpdateManyWithoutArticleNestedInput
+  articleCategories?: Prisma.ArticleCategoryUncheckedUpdateManyWithoutArticleNestedInput
+}
+
+export type ArticleUncheckedUpdateManyWithoutSavedByUsersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  excerpt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contentType?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumArticleStatusFieldUpdateOperationsInput | $Enums.ArticleStatus
+  thumbnail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  featured?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isPremium?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  authorId?: Prisma.StringFieldUpdateOperationsInput | string
+}
+
 export type ArticleUpdateWithoutAuthorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1153,6 +1340,7 @@ export type ArticleUpdateWithoutAuthorInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  savedByUsers?: Prisma.UserUpdateManyWithoutSavedArticlesNestedInput
   comments?: Prisma.CommentUpdateManyWithoutArticleNestedInput
   likes?: Prisma.LikeUpdateManyWithoutArticleNestedInput
   articleCategories?: Prisma.ArticleCategoryUpdateManyWithoutArticleNestedInput
@@ -1174,6 +1362,7 @@ export type ArticleUncheckedUpdateWithoutAuthorInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  savedByUsers?: Prisma.UserUncheckedUpdateManyWithoutSavedArticlesNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutArticleNestedInput
   likes?: Prisma.LikeUncheckedUpdateManyWithoutArticleNestedInput
   articleCategories?: Prisma.ArticleCategoryUncheckedUpdateManyWithoutArticleNestedInput
@@ -1203,12 +1392,14 @@ export type ArticleUncheckedUpdateManyWithoutAuthorInput = {
  */
 
 export type ArticleCountOutputType = {
+  savedByUsers: number
   comments: number
   likes: number
   articleCategories: number
 }
 
 export type ArticleCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  savedByUsers?: boolean | ArticleCountOutputTypeCountSavedByUsersArgs
   comments?: boolean | ArticleCountOutputTypeCountCommentsArgs
   likes?: boolean | ArticleCountOutputTypeCountLikesArgs
   articleCategories?: boolean | ArticleCountOutputTypeCountArticleCategoriesArgs
@@ -1222,6 +1413,13 @@ export type ArticleCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Exte
    * Select specific fields to fetch from the ArticleCountOutputType
    */
   select?: Prisma.ArticleCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * ArticleCountOutputType without action
+ */
+export type ArticleCountOutputTypeCountSavedByUsersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserWhereInput
 }
 
 /**
@@ -1263,6 +1461,7 @@ export type ArticleSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   updatedAt?: boolean
   publishedAt?: boolean
   authorId?: boolean
+  savedByUsers?: boolean | Prisma.Article$savedByUsersArgs<ExtArgs>
   author?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   comments?: boolean | Prisma.Article$commentsArgs<ExtArgs>
   likes?: boolean | Prisma.Article$likesArgs<ExtArgs>
@@ -1331,6 +1530,7 @@ export type ArticleSelectScalar = {
 
 export type ArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "excerpt" | "content" | "contentJson" | "contentType" | "status" | "thumbnail" | "featured" | "viewCount" | "isPremium" | "createdAt" | "updatedAt" | "publishedAt" | "authorId", ExtArgs["result"]["article"]>
 export type ArticleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  savedByUsers?: boolean | Prisma.Article$savedByUsersArgs<ExtArgs>
   author?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   comments?: boolean | Prisma.Article$commentsArgs<ExtArgs>
   likes?: boolean | Prisma.Article$likesArgs<ExtArgs>
@@ -1347,6 +1547,7 @@ export type ArticleIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
 export type $ArticlePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Article"
   objects: {
+    savedByUsers: Prisma.$UserPayload<ExtArgs>[]
     author: Prisma.$UserPayload<ExtArgs>
     comments: Prisma.$CommentPayload<ExtArgs>[]
     likes: Prisma.$LikePayload<ExtArgs>[]
@@ -1763,6 +1964,7 @@ readonly fields: ArticleFieldRefs;
  */
 export interface Prisma__ArticleClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  savedByUsers<T extends Prisma.Article$savedByUsersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Article$savedByUsersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   author<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   comments<T extends Prisma.Article$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Article$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   likes<T extends Prisma.Article$likesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Article$likesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2205,6 +2407,30 @@ export type ArticleDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Limit how many Articles to delete.
    */
   limit?: number
+}
+
+/**
+ * Article.savedByUsers
+ */
+export type Article$savedByUsersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+  orderBy?: Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[]
+  cursor?: Prisma.UserWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
 }
 
 /**

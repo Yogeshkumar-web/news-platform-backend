@@ -149,7 +149,7 @@ export const articleValidation = {
             .trim()
             .isLength({ min: 5, max: 255 })
             .withMessage("Title must be between 5 and 255 characters")
-            .matches(/^[a-zA-Z0-9\s\-.,!?()]+$/)
+            .matches(/^[a-zA-Z0-9\s\-.,!?'":;&()\[\]]+$/)
             .withMessage("Title contains invalid characters"),
 
         body("content")

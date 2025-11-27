@@ -16,8 +16,15 @@ enum UserRole {
     ADMIN
     SUPERADMIN
     WRITER
-    USER
     SUBSCRIBER
+    USER
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  TRIAL
+  CANCELED
 }
 
 // Naya Enum: User Status Management ke liye
@@ -48,11 +55,19 @@ enum ArticleStatus {
 model User {
     id           String   @id @default(cuid())
     name         String   @db.VarChar(150)
+    isVerified      Boolean  @default(false) 
+    verificationToken String?  @unique 
+    googleId        String?  @unique 
     email        String   @unique @db.VarChar(255)
     hashedPass   String   @db.VarChar(255)
     role         UserRole @default(USER)
     profileImage String?  @db.VarChar(255)
     bio          String?  @db.Text
+    subscription   Subscription?
+    subscriptionId String?       @unique // One-to-one relationship
+  
+  // NEW RELATIONSHIP (Phase 2: Saved Articles ke liye)
+    savedArticles  Article[]     @relation("UserSavedArticles")
     status UserStatus @default(ACTIVE)
     isSuspended  Boolean  @default(false)
     createdAt    DateTime @default(now()) @map("created_at")
@@ -62,6 +77,27 @@ model User {
     articles Article[]
     comments Comment[]
     likes    Like[]
+}
+
+model Subscription {
+  id             String             @id @default(cuid())
+  
+  // One-to-one link to User
+  userId         String             @unique
+  user           User               @relation(fields: [userId], references: [id])
+  
+  // Fields from SubscriptionInfo interface (src/types/index.ts)
+  status         SubscriptionStatus @default(TRIAL)
+  planId         String
+  startDate      DateTime
+  endDate        DateTime
+  isAutoRenew    Boolean            @default(true)
+  
+  // Payment gateway reference ID
+  paymentRefId   String?            @unique 
+  
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 }
 
 model Article {
@@ -79,6 +115,7 @@ model Article {
     isPremium Boolean       @default(false) @map("is_premium")
     createdAt DateTime      @default(now()) @map("created_at")
     updatedAt DateTime      @updatedAt @map("updated_at")
+    savedByUsers User[] @relation("UserSavedArticles")
     publishedAt DateTime?
 
     // Relationships

@@ -13,11 +13,21 @@ export const UserRole = {
   ADMIN: 'ADMIN',
   SUPERADMIN: 'SUPERADMIN',
   WRITER: 'WRITER',
-  USER: 'USER',
-  SUBSCRIBER: 'SUBSCRIBER'
+  SUBSCRIBER: 'SUBSCRIBER',
+  USER: 'USER'
 } as const
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
+
+
+export const SubscriptionStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  TRIAL: 'TRIAL',
+  CANCELED: 'CANCELED'
+} as const
+
+export type SubscriptionStatus = (typeof SubscriptionStatus)[keyof typeof SubscriptionStatus]
 
 
 export const UserStatus = {

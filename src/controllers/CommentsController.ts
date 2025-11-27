@@ -24,8 +24,7 @@ export class CommentsController {
 
         // Only admins/moderators can see spam/unapproved comments
         const user = (req as AuthenticatedRequest).user;
-        const canSeeHidden =
-            user?.role === "ADMIN" || user?.role === "MODERATOR";
+        const canSeeHidden = user?.role === "ADMIN";
 
         const result = await this.commentsService.getCommentsByArticleId(
             articleId,
@@ -205,8 +204,7 @@ export class CommentsController {
 
             // Users can only see their own comments unless they're admin
             const targetUserId = userId || currentUserId;
-            const canViewOthers =
-                req.user?.role === "ADMIN" || req.user?.role === "MODERATOR";
+            const canViewOthers = req.user?.role === "ADMIN";
 
             if (targetUserId !== currentUserId && !canViewOthers) {
                 return ResponseHandler.error(
@@ -317,7 +315,7 @@ export class CommentsController {
             const userRole = req.user?.role;
 
             // Only admins and moderators can see recent comments across all articles
-            if (userRole !== "ADMIN" && userRole !== "MODERATOR") {
+            if (userRole !== "ADMIN") {
                 return ResponseHandler.error(
                     res,
                     "Insufficient permissions",

@@ -1,40 +1,16 @@
 import { Router } from "express";
-import multer from "multer";
-import path from "path";
-import fs from "fs";
-import { Request } from "express";
 import { ArticleController } from "../controllers/ArticleController";
 import { authenticateToken, requireRole } from "../middleware/authMiddleware";
 import {
     articleValidation,
     categoryValidation,
     handleValidationErrors,
+    sanitizeInput,
 } from "../middleware/validation";
+import { imageUploadMiddleware } from "../middleware/fileUpload";
 
 const router = Router();
 const controller = new ArticleController();
-
-const storage = multer.memoryStorage();
-
-const fileFilter = (
-    req: Request,
-    file: Express.Multer.File,
-    cb: multer.FileFilterCallback
-) => {
-    if (file.mimetype.startsWith("image/")) {
-        cb(null, true);
-    } else {
-        cb(new Error("Only image files are allowed"));
-    }
-};
-
-const upload = multer({
-    storage: storage,
-    limits: {
-        fileSize: 5 * 1024 * 1024,
-    },
-    fileFilter: fileFilter,
-});
 
 // PUBLIC ROUTES
 router.get(
@@ -58,7 +34,7 @@ router.post(
     "/upload-image",
     authenticateToken,
     requireRole(["ADMIN", "SUPERADMIN", "WRITER"]),
-    upload.single("image"),
+    imageUploadMiddleware.single("image"),
     controller.uploadImage
 );
 
@@ -77,6 +53,7 @@ router.post(
     "/",
     authenticateToken,
     requireRole(["ADMIN", "SUPERADMIN", "WRITER"]),
+    sanitizeInput,
     articleValidation.createArticle,
     handleValidationErrors,
     controller.createArticle

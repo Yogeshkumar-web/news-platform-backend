@@ -2,8 +2,10 @@ import { Request, Response } from "express";
 import { CategoryService } from "../services/CategoryService";
 import { ResponseHandler } from "../utils/response";
 import { asyncHandler } from "../utils/asyncHandler";
+import { ArticleService } from "../services/ArticleService";
 
 const categoryService = new CategoryService();
+const articleService = new ArticleService();
 
 export class CategoryController {
     // Admin: Create new category (POST /categories)
@@ -19,6 +21,15 @@ export class CategoryController {
     // Admin: Get list of all categories (GET /categories/admin/all)
     getAllCategories = asyncHandler(async (req: Request, res: Response) => {
         const categories = await categoryService.getAllCategories();
+        return ResponseHandler.success(
+            res,
+            categories,
+            "Categories retrieved successfully"
+        );
+    });
+
+    getCategories = asyncHandler(async (req: Request, res: Response) => {
+        const categories = await articleService.getCategories();
         return ResponseHandler.success(
             res,
             categories,
@@ -48,21 +59,3 @@ export class CategoryController {
         );
     });
 }
-
-// import { Request, Response } from "express";
-// import { CategoryService } from "../services/CategoryService";
-// import { ResponseHandler } from "../utils/response";
-// import { asyncHandler } from "../utils/asyncHandler";
-
-// const categoryService = new CategoryService();
-
-// export class CategoryController {
-//     getCategories = asyncHandler(async (req: Request, res: Response) => {
-//         const categories = await categoryService.getCategories();
-//         return ResponseHandler.success(
-//             res,
-//             categories,
-//             "Categories retrieved successfully"
-//         );
-//     });
-// }

@@ -4,12 +4,15 @@ import { normalizePageParams, buildPaginationMeta } from "../utils/pagination";
 import {
     NotFoundError,
     AuthorizationError,
+    ConflictError,
     AuthenticationError,
     ValidationError,
+    UserRole,
+    SubscriptionInfo,
 } from "../types"; // Assuming error types exist
+import { UserRepository } from "../repositories/UserRepository";
+import { ArticleRepository } from "../repositories/ArticleRepository";
 
-// Assuming UserRole and UserStatus definitions
-type UserRole = "ADMIN" | "SUPERADMIN" | "WRITER" | "USER";
 type UserStatus = "ACTIVE" | "BANNED";
 
 export interface GetUsersQuery {
@@ -20,6 +23,14 @@ export interface GetUsersQuery {
 }
 
 export class UserService {
+    private userRepository: UserRepository;
+    private articleRepository: ArticleRepository;
+
+    constructor() {
+        this.userRepository = new UserRepository();
+        // Assuming ArticleRepository class exists and is exported
+        this.articleRepository = new ArticleRepository();
+    }
     /**
      * Admin: Get a paginated list of all users.
      */
@@ -64,6 +75,89 @@ export class UserService {
             users: usersRaw,
             pagination: buildPaginationMeta(page, limit, total),
         };
+    }
+
+    /**
+     * Get a user's subscription status.
+     * @param userId The ID of the user.
+     * @returns SubscriptionInfo or null if user has no subscription record.
+     */
+    async getSubscriptionStatus(
+        userId: string
+    ): Promise<SubscriptionInfo | null> {
+        // Use repository to find user and include subscription data
+        const user = await this.userRepository.findUserWithSubscription(userId);
+
+        if (!user) {
+            throw new NotFoundError("User not found.", "USER_NOT_FOUND");
+        }
+
+        // Return the subscription object, which is null if no record exists
+        return user.subscription || null;
+    }
+
+    /**
+     * Initiates the subscription checkout process. (Placeholder for Payment Gateway integration)
+     * @param userId The ID of the user.
+     * @returns An object containing the checkout session URL/ID.
+     */
+    async createSubscriptionCheckout(
+        userId: string
+    ): Promise<{ checkoutUrl: string; orderId: string }> {
+        // 1. Check if user already has an active or trial subscription
+        const userSubscription = await this.getSubscriptionStatus(userId);
+
+        if (
+            userSubscription &&
+            (userSubscription.status === "ACTIVE" ||
+                userSubscription.status === "TRIAL")
+        ) {
+            throw new ConflictError(
+                "User already has an active or trial subscription.",
+                "ALREADY_SUBSCRIBED"
+            );
+        }
+
+        // 2. Placeholder for Payment Gateway Integration (e.g., calling a Stripe/Razorpay service)
+        const mockOrderId = `ORDER_${Date.now()}_${userId.substring(0, 4)}`;
+
+        // NOTE: In a real app, 'FRONTEND_URL' would be read from process.env
+        const mockCheckoutUrl = `/api/v1/payment/checkout?order_id=${mockOrderId}`;
+
+        logger.info("Subscription checkout initiated (Mock)", {
+            userId,
+            orderId: mockOrderId,
+        });
+
+        // 3. Return the necessary details to the client
+        return {
+            checkoutUrl: mockCheckoutUrl,
+            orderId: mockOrderId,
+        };
+    }
+
+    async getSavedArticles(
+        userId: string,
+        query: { page?: any; pageSize?: any }
+    ) {
+        // normalizePageParams call gives us 'limit', not 'pageSize'
+        const { page, limit, skip } = normalizePageParams(
+            query.page,
+            query.pageSize
+        );
+
+        // ArticleRepository mein is method ko define karna hoga
+        const { articles, total } =
+            await this.articleRepository.getSavedArticlesByUser(
+                userId,
+                page,
+                limit // Use normalized limit/pageSize
+            );
+
+        // FIX: Use imported function 'buildPaginationMeta' with correct positional arguments (page, limit, total)
+        const pagination = buildPaginationMeta(page, limit, total);
+
+        return { articles, pagination };
     }
 
     /**

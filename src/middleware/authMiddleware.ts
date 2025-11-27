@@ -4,6 +4,7 @@ import {
     AuthenticatedRequest,
     AuthTokenPayload,
     AuthenticationError,
+    AuthorizationError,
 } from "../types";
 import { env } from "../config/environment";
 import { ResponseHandler } from "../utils/response";
@@ -112,13 +113,14 @@ export const requireRole = (roles: string[]) => {
         }
 
         // Defensive check: ensure user.role is present and string
-        const userRole = String(req.user.role || "");
+        const userRole = String(req.user.role || "").trim();
         if (!roles.includes(userRole)) {
+            const error = new AuthorizationError();
             return ResponseHandler.error(
                 res,
-                "Insufficient permissions",
-                403,
-                "INSUFFICIENT_PERMISSIONS",
+                error.message,
+                error.statusCode,
+                error.code,
                 undefined,
                 req.traceId
             );
@@ -126,4 +128,43 @@ export const requireRole = (roles: string[]) => {
 
         next();
     };
+};
+
+export const requireSuperAdmin = requireRole(["SUPERADMIN"]);
+
+// NEW: 2. Auth Guard for SUBSCRIBER only
+export const requireSubscriber = (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    if (!req.user) {
+        return ResponseHandler.error(
+            res,
+            "Authentication required for subscription check",
+            401,
+            "AUTH_REQUIRED",
+            undefined,
+            req.traceId
+        );
+    }
+
+    // Check the flag which should be present in the JWT payload
+    if (!req.user.isSubscriber) {
+        // Use AuthorizationError for subscription access issues
+        const error = new AuthorizationError(
+            "Subscription required to access this feature",
+            "SUBSCRIPTION_REQUIRED"
+        );
+        return ResponseHandler.error(
+            res,
+            error.message,
+            error.statusCode,
+            error.code,
+            undefined,
+            req.traceId
+        );
+    }
+
+    next();
 };

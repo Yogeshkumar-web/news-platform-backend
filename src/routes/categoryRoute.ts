@@ -9,6 +9,10 @@ import {
 const router = Router();
 const controller = new CategoryController();
 
+// Public route to get all categories
+// Path: /api/categories
+router.get("/", controller.getCategories);
+
 // Admin routes require authentication and Admin/SuperAdmin role
 router.use(authenticateToken);
 router.use(requireRole(["ADMIN", "SUPERADMIN"]));
@@ -41,13 +45,3 @@ router.delete(
 );
 
 export default router;
-
-// import { Router } from "express";
-// import { CategoryController } from "../controllers/CategoryController";
-
-// const router = Router();
-// const controller = new CategoryController();
-
-// router.get("/", controller.getCategories);
-
-// export default router;

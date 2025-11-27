@@ -2,8 +2,6 @@ import { ArticleRepository } from "../repositories/ArticleRepository";
 import { normalizePageParams, buildPaginationMeta } from "../utils/pagination";
 import { categoryKey } from "../utils/category";
 import logger from "../utils/logger";
-import ImageKit from "imagekit";
-
 import {
     NotFoundError,
     AuthorizationError,
@@ -12,14 +10,11 @@ import {
     UpdateArticleData,
     GetMyArticlesQuery,
     GetArticlesQuery,
+    AuthTokenPayload,
 } from "../types";
-import { env } from "../config/environment";
+import { ImageKitService } from "./ImageKitService";
 
-const imagekit = new ImageKit({
-    publicKey: env.IMAGEKIT_PUBLIC_KEY,
-    privateKey: env.IMAGEKIT_PRIVATE_KEY,
-    urlEndpoint: env.IMAGEKIT_URL_ENDPOINT,
-});
+const imagekitService = new ImageKitService();
 
 // DEFAULT SELECT - use `select` for nested shapes to avoid include/select mismatch
 const DEFAULT_SELECT = {
@@ -29,6 +24,7 @@ const DEFAULT_SELECT = {
     excerpt: true,
     thumbnail: true,
     isPremium: true,
+    content: true,
     viewCount: true,
     status: true,
     createdAt: true,
@@ -422,32 +418,33 @@ export class ArticleService {
         return this.mapArticleDbToDto(updatedArticle as EditArticleDb);
     }
 
-    async uploadImage(file?: Express.Multer.File): Promise<string> {
+    public async uploadImage(
+        file: Express.Multer.File | undefined
+    ): Promise<string> {
         if (!file) {
-            throw new ValidationError("No file provided", "NO_FILE");
+            // Agar Multer ne file accept nahi ki (fileFilter mein fail), toh req.file undefined hoga.
+            // Hum isko ImageKitService ko bhejne se pehle handle karenge.
+            throw new Error("No image file provided or file type is invalid.");
         }
 
-        // Convert Buffer to Base64 (ImageKit requires this or a stream)
-        const base64File = file.buffer.toString("base64");
+        // ImageKitService ko file buffer bhej rahe hain
+        const imageUrl = await imagekitService.uploadImage(file);
 
-        try {
-            const result = await imagekit.upload({
-                file: base64File,
-                fileName: file.originalname,
-                folder: "/news-articles", // Aapka specific folder
-            });
-
-            logger.info("ImageKit upload successful", { url: result.url });
-
-            return result.url; // ImageKit se mila public URL return karein
-        } catch (error) {
-            logger.error("ImageKit upload failed", { error });
-            throw new Error("Failed to upload image to cloud storage");
-        }
+        return imageUrl;
     }
 
     // GET ARTICLES (public)
-    async getArticles(query: GetArticlesQuery) {
+    async getArticles(query: GetArticlesQuery, user?: AuthTokenPayload) {
+        const isSubscriber = user?.isSubscriber || false;
+
+        // Base where clause to get PUBLISHED articles
+        const baseWhere: any = { status: "PUBLISHED" };
+
+        // If user is NOT a subscriber, exclude premium articles (isPremium: false)
+        if (!isSubscriber) {
+            baseWhere.isPremium = false;
+        }
+
         const { page, limit, skip } = normalizePageParams(
             query.page,
             query.pageSize
@@ -537,11 +534,7 @@ export class ArticleService {
         };
     }
 
-    async getArticleBySlug(slug: string) {
-        console.log("🔍 DEBUG: Received slug:", JSON.stringify(slug));
-        console.log("🔍 DEBUG: Slug type:", typeof slug);
-        console.log("🔍 DEBUG: Slug length:", slug?.length);
-
+    async getArticleBySlug(slug: string, user?: AuthTokenPayload) {
         if (!slug) throw new NotFoundError("Invalid slug", "INVALID_SLUG");
 
         const articleRaw = (await this.repo.findBySlug(
@@ -549,17 +542,23 @@ export class ArticleService {
             DEFAULT_SELECT as any
         )) as any;
 
-        console.log("📄 DEBUG: Database result:", {
-            found: !!articleRaw,
-            id: articleRaw?.id,
-            title: articleRaw?.title,
-            slug: articleRaw?.slug,
-            status: articleRaw?.status,
-            rawArticle: articleRaw ? "Object found" : "NULL",
-        });
-
         if (!articleRaw || articleRaw.status !== "PUBLISHED") {
             throw new NotFoundError("Article not found", "ARTICLE_NOT_FOUND");
+        }
+
+        const isPremium = articleRaw.isPremium;
+        // User ka subscriber status token se liya
+        const isSubscriber = user?.isSubscriber || false;
+
+        // Step 2: Check for Premium access
+        if (isPremium && !isSubscriber) {
+            // Non-subscribers ke liye content ko excerpt se replace karein
+            return {
+                ...articleRaw,
+                content: articleRaw.excerpt, // Full content hide kiya
+                accessRestricted: true,
+                restrictionReason: "PREMIUM_REQUIRED",
+            };
         }
 
         // Fire-and-forget increment view count

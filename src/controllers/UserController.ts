@@ -92,4 +92,85 @@ export class UserController {
             );
         }
     );
+
+    getSavedArticles = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const userId = req.user?.id;
+
+            if (!userId) {
+                // Yeh authenticateToken se handle ho jayega, par defensive check accha hai
+                return ResponseHandler.error(
+                    res,
+                    "Authentication required",
+                    401,
+                    "AUTH_REQUIRED"
+                );
+            }
+
+            const result = await userService.getSavedArticles(
+                userId,
+                req.query
+            );
+
+            return ResponseHandler.success(
+                res,
+                result.articles,
+                "Saved articles retrieved successfully",
+                result.pagination
+            );
+        }
+    );
+
+    getSubscriptionStatus = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const userId = req.user?.id;
+
+            if (!userId) {
+                return ResponseHandler.error(
+                    res,
+                    "Authentication required",
+                    401,
+                    "AUTH_REQUIRED"
+                );
+            }
+
+            const result = await userService.getSubscriptionStatus(userId);
+
+            const message = result
+                ? `Subscription status retrieved successfully. Status: ${result.status}`
+                : "User is not currently subscribed.";
+
+            return ResponseHandler.success(res, result, message);
+        }
+    );
+
+    // Task 4.2: Create Subscription Checkout
+    createSubscriptionCheckout = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const userId = req.user?.id;
+            const { planId } = req.body; // Frontend se planId aayega
+
+            if (!userId || !planId) {
+                // Plan ID validation should ideally be in middleware
+                return ResponseHandler.error(
+                    res,
+                    "Plan ID and authentication are required",
+                    400,
+                    "VALIDATION_ERROR"
+                );
+            }
+
+            // Service will call payment gateway
+            const result = await userService.createSubscriptionCheckout(
+                userId
+                // planId
+            );
+
+            return ResponseHandler.success(
+                res,
+                result,
+                "Subscription checkout session created. Redirect user to checkoutUrl."
+            );
+        }
+    );
 }

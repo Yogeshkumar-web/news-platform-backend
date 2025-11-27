@@ -1,5 +1,3 @@
-// --- src/services/CategoryService.ts (New File) ---
-
 import { CategoryRepository } from "../repositories/CategoryRepository";
 import { categoryKey } from "../utils/category"; // Utility for key generation/normalization
 import logger from "../utils/logger";

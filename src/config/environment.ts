@@ -20,11 +20,35 @@ const envSchema = z.object({
     IMAGEKIT_URL_ENDPOINT: z.string().min(1, "Url endpoint is required"),
     REDIS_URL: z.string().optional(),
 
+    // NEW: OAuth Credentials
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
+
+    // // NEW: Email Service Credentials
+    EMAIL_HOST: z.string().min(1, "EMAIL_HOST is required for SMTP."),
+    EMAIL_PORT: z.string().default("2525").transform(Number),
+    EMAIL_USER: z.string().min(1, "EMAIL_USER is required for SMTP auth."),
+    EMAIL_PASS: z.string().min(1, "EMAIL_PASS is required for SMTP auth."),
+    EMAIL_FROM: z
+        .string()
+        .email("EMAIL_FROM must be a valid email.")
+        .default("no-reply@newssite.com"),
+
+    // NEW: RESEND API Credentials (Nodemailer fields removed)
+    // RESEND_API_KEY: z
+    //     .string()
+    //     .min(1, "RESEND_API_KEY is required for email sending."),
+    // RESEND_FROM_EMAIL: z
+    //     .string()
+    //     .email("RESEND_FROM_EMAIL must be a valid email address.")
+    //     .min(1),
+
     // Security
     JWT_SECRET: z
         .string()
         .min(32, "JWT_SECRET must be at least 32 characters long"),
     JWT_EXPIRES_IN: z.string().default("7d"),
+    VERIFICATION_TOKEN_EXPIRES_IN: z.string().default("1h"),
     BCRYPT_SALT_ROUNDS: z.string().default("12").transform(Number),
 
     // Rate Limiting

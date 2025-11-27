@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  Subscription: 'Subscription',
   Article: 'Article',
   Category: 'Category',
   ArticleCategory: 'ArticleCategory',
@@ -78,11 +79,15 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  isVerified: 'isVerified',
+  verificationToken: 'verificationToken',
+  googleId: 'googleId',
   email: 'email',
   hashedPass: 'hashedPass',
   role: 'role',
   profileImage: 'profileImage',
   bio: 'bio',
+  subscriptionId: 'subscriptionId',
   status: 'status',
   isSuspended: 'isSuspended',
   createdAt: 'createdAt',
@@ -90,6 +95,22 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const SubscriptionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  status: 'status',
+  planId: 'planId',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  isAutoRenew: 'isAutoRenew',
+  paymentRefId: 'paymentRefId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SubscriptionScalarFieldEnum = (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum]
 
 
 export const ArticleScalarFieldEnum = {

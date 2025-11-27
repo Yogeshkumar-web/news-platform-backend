@@ -14,6 +14,17 @@ const commentsController = new CommentsController();
 // Apply input sanitization to all routes
 router.use(sanitizeInput);
 
+// Create comment (authenticated users only)
+router.post(
+    "/create",
+
+    commentRateLimit, // Apply comment-specific rate limiting
+    authenticateToken,
+    commentValidation.create,
+    handleValidationErrors,
+    commentsController.createComment
+);
+
 // Public routes - Get comments for an article
 router.get(
     "/:articleId",
@@ -40,14 +51,6 @@ router.patch(
     commentValidation.moderate,
     handleValidationErrors,
     commentsController.moderateComment
-);
-// Create comment (authenticated users only)
-router.post(
-    "/",
-    commentRateLimit, // Apply comment-specific rate limiting
-    commentValidation.create,
-    handleValidationErrors,
-    commentsController.createComment
 );
 
 // Update comment (comment owner only)

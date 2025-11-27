@@ -7,19 +7,24 @@ import { AuthenticatedRequest } from "../types";
 const articleService = new ArticleService();
 
 export class ArticleController {
-    getArticles = asyncHandler(async (req: Request, res: Response) => {
-        const result = await articleService.getArticles({
-            page: req.query.page,
-            pageSize: req.query.pageSize,
-            category: req.query.category as string,
-        });
-        return ResponseHandler.success(
-            res,
-            result.articles,
-            "Articles retrieved successfully",
-            result.pagination
-        );
-    });
+    getArticles = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const result = await articleService.getArticles(
+                {
+                    page: req.query.page,
+                    pageSize: req.query.pageSize,
+                    category: req.query.category as string,
+                },
+                req.user
+            );
+            return ResponseHandler.success(
+                res,
+                result.articles,
+                "Articles retrieved successfully",
+                result.pagination
+            );
+        }
+    );
 
     getArticlesByCategory = asyncHandler(
         async (req: Request, res: Response) => {
@@ -38,15 +43,19 @@ export class ArticleController {
         }
     );
 
-    getArticleBySlug = asyncHandler(async (req: Request, res: Response) => {
-        const slug = req.params.slug;
-        const article = await articleService.getArticleBySlug(slug);
-        return ResponseHandler.success(
-            res,
-            article,
-            "Article retrieved successfully"
-        );
-    });
+    getArticleBySlug = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const slug = req.params.slug;
+            const user = req.user;
+
+            const article = await articleService.getArticleBySlug(slug, user);
+            return ResponseHandler.success(
+                res,
+                article,
+                "Article retrieved successfully"
+            );
+        }
+    );
 
     createArticle = asyncHandler(
         async (req: AuthenticatedRequest, res: Response) => {
