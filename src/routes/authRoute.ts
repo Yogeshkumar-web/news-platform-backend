@@ -94,4 +94,12 @@ router.patch(
     authController.changePassword
 );
 
+// Google OAuth Routes
+router.get("/google", authController.googleAuth);
+
+router.get(
+    "/google/callback",
+    authController.googleCallback
+);
+
 export default router;

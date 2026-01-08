@@ -100,6 +100,14 @@ export const authenticateToken = async (
  */
 export const requireRole = (roles: string[]) => {
     return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+        console.log("[Backend Auth] User:", req.user);
+        console.log("[Backend Auth] User role:", req.user?.role);
+        console.log("[Backend Auth] Required roles:", roles);
+        console.log(
+            "[Backend Auth] Has permission:",
+            roles.includes(req.user?.role!)
+        );
+
         // Defensive check: ensure user attached
         if (!req.user) {
             return ResponseHandler.error(
@@ -113,7 +121,9 @@ export const requireRole = (roles: string[]) => {
         }
 
         // Defensive check: ensure user.role is present and string
-        const userRole = String(req.user.role || "").trim();
+        const userRole = String(req.user.role || "")
+            .trim()
+            .toUpperCase();
         if (!roles.includes(userRole)) {
             const error = new AuthorizationError();
             return ResponseHandler.error(

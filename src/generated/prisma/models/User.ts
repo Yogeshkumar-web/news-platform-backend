@@ -214,7 +214,7 @@ export type UserGroupByOutputType = {
   verificationToken: string | null
   googleId: string | null
   email: string
-  hashedPass: string
+  hashedPass: string | null
   role: $Enums.UserRole
   profileImage: string | null
   bio: string | null
@@ -253,7 +253,7 @@ export type UserWhereInput = {
   verificationToken?: Prisma.StringNullableFilter<"User"> | string | null
   googleId?: Prisma.StringNullableFilter<"User"> | string | null
   email?: Prisma.StringFilter<"User"> | string
-  hashedPass?: Prisma.StringFilter<"User"> | string
+  hashedPass?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   profileImage?: Prisma.StringNullableFilter<"User"> | string | null
   bio?: Prisma.StringNullableFilter<"User"> | string | null
@@ -276,7 +276,7 @@ export type UserOrderByWithRelationInput = {
   verificationToken?: Prisma.SortOrderInput | Prisma.SortOrder
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrder
-  hashedPass?: Prisma.SortOrder
+  hashedPass?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   profileImage?: Prisma.SortOrderInput | Prisma.SortOrder
   bio?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -303,7 +303,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   name?: Prisma.StringFilter<"User"> | string
   isVerified?: Prisma.BoolFilter<"User"> | boolean
-  hashedPass?: Prisma.StringFilter<"User"> | string
+  hashedPass?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   profileImage?: Prisma.StringNullableFilter<"User"> | string | null
   bio?: Prisma.StringNullableFilter<"User"> | string | null
@@ -325,7 +325,7 @@ export type UserOrderByWithAggregationInput = {
   verificationToken?: Prisma.SortOrderInput | Prisma.SortOrder
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrder
-  hashedPass?: Prisma.SortOrder
+  hashedPass?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   profileImage?: Prisma.SortOrderInput | Prisma.SortOrder
   bio?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -349,7 +349,7 @@ export type UserScalarWhereWithAggregatesInput = {
   verificationToken?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   googleId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
-  hashedPass?: Prisma.StringWithAggregatesFilter<"User"> | string
+  hashedPass?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
   profileImage?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   bio?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -367,7 +367,7 @@ export type UserCreateInput = {
   verificationToken?: string | null
   googleId?: string | null
   email: string
-  hashedPass: string
+  hashedPass?: string | null
   role?: $Enums.UserRole
   profileImage?: string | null
   bio?: string | null
@@ -390,7 +390,7 @@ export type UserUncheckedCreateInput = {
   verificationToken?: string | null
   googleId?: string | null
   email: string
-  hashedPass: string
+  hashedPass?: string | null
   role?: $Enums.UserRole
   profileImage?: string | null
   bio?: string | null
@@ -413,7 +413,7 @@ export type UserUpdateInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -436,7 +436,7 @@ export type UserUncheckedUpdateInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -459,7 +459,7 @@ export type UserCreateManyInput = {
   verificationToken?: string | null
   googleId?: string | null
   email: string
-  hashedPass: string
+  hashedPass?: string | null
   role?: $Enums.UserRole
   profileImage?: string | null
   bio?: string | null
@@ -477,7 +477,7 @@ export type UserUpdateManyMutationInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -495,7 +495,7 @@ export type UserUncheckedUpdateManyInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -700,7 +700,7 @@ export type UserCreateWithoutSubscriptionInput = {
   verificationToken?: string | null
   googleId?: string | null
   email: string
-  hashedPass: string
+  hashedPass?: string | null
   role?: $Enums.UserRole
   profileImage?: string | null
   bio?: string | null
@@ -722,7 +722,7 @@ export type UserUncheckedCreateWithoutSubscriptionInput = {
   verificationToken?: string | null
   googleId?: string | null
   email: string
-  hashedPass: string
+  hashedPass?: string | null
   role?: $Enums.UserRole
   profileImage?: string | null
   bio?: string | null
@@ -760,7 +760,7 @@ export type UserUpdateWithoutSubscriptionInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -782,7 +782,7 @@ export type UserUncheckedUpdateWithoutSubscriptionInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -804,7 +804,7 @@ export type UserCreateWithoutSavedArticlesInput = {
   verificationToken?: string | null
   googleId?: string | null
   email: string
-  hashedPass: string
+  hashedPass?: string | null
   role?: $Enums.UserRole
   profileImage?: string | null
   bio?: string | null
@@ -826,7 +826,7 @@ export type UserUncheckedCreateWithoutSavedArticlesInput = {
   verificationToken?: string | null
   googleId?: string | null
   email: string
-  hashedPass: string
+  hashedPass?: string | null
   role?: $Enums.UserRole
   profileImage?: string | null
   bio?: string | null
@@ -853,7 +853,7 @@ export type UserCreateWithoutArticlesInput = {
   verificationToken?: string | null
   googleId?: string | null
   email: string
-  hashedPass: string
+  hashedPass?: string | null
   role?: $Enums.UserRole
   profileImage?: string | null
   bio?: string | null
@@ -875,7 +875,7 @@ export type UserUncheckedCreateWithoutArticlesInput = {
   verificationToken?: string | null
   googleId?: string | null
   email: string
-  hashedPass: string
+  hashedPass?: string | null
   role?: $Enums.UserRole
   profileImage?: string | null
   bio?: string | null
@@ -921,7 +921,7 @@ export type UserScalarWhereInput = {
   verificationToken?: Prisma.StringNullableFilter<"User"> | string | null
   googleId?: Prisma.StringNullableFilter<"User"> | string | null
   email?: Prisma.StringFilter<"User"> | string
-  hashedPass?: Prisma.StringFilter<"User"> | string
+  hashedPass?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   profileImage?: Prisma.StringNullableFilter<"User"> | string | null
   bio?: Prisma.StringNullableFilter<"User"> | string | null
@@ -950,7 +950,7 @@ export type UserUpdateWithoutArticlesInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -972,7 +972,7 @@ export type UserUncheckedUpdateWithoutArticlesInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -994,7 +994,7 @@ export type UserCreateWithoutCommentsInput = {
   verificationToken?: string | null
   googleId?: string | null
   email: string
-  hashedPass: string
+  hashedPass?: string | null
   role?: $Enums.UserRole
   profileImage?: string | null
   bio?: string | null
@@ -1016,7 +1016,7 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   verificationToken?: string | null
   googleId?: string | null
   email: string
-  hashedPass: string
+  hashedPass?: string | null
   role?: $Enums.UserRole
   profileImage?: string | null
   bio?: string | null
@@ -1054,7 +1054,7 @@ export type UserUpdateWithoutCommentsInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1076,7 +1076,7 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1098,7 +1098,7 @@ export type UserCreateWithoutLikesInput = {
   verificationToken?: string | null
   googleId?: string | null
   email: string
-  hashedPass: string
+  hashedPass?: string | null
   role?: $Enums.UserRole
   profileImage?: string | null
   bio?: string | null
@@ -1120,7 +1120,7 @@ export type UserUncheckedCreateWithoutLikesInput = {
   verificationToken?: string | null
   googleId?: string | null
   email: string
-  hashedPass: string
+  hashedPass?: string | null
   role?: $Enums.UserRole
   profileImage?: string | null
   bio?: string | null
@@ -1158,7 +1158,7 @@ export type UserUpdateWithoutLikesInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1180,7 +1180,7 @@ export type UserUncheckedUpdateWithoutLikesInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1202,7 +1202,7 @@ export type UserUpdateWithoutSavedArticlesInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1224,7 +1224,7 @@ export type UserUncheckedUpdateWithoutSavedArticlesInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1246,7 +1246,7 @@ export type UserUncheckedUpdateManyWithoutSavedArticlesInput = {
   verificationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  hashedPass?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1421,7 +1421,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     verificationToken: string | null
     googleId: string | null
     email: string
-    hashedPass: string
+    hashedPass: string | null
     role: $Enums.UserRole
     profileImage: string | null
     bio: string | null

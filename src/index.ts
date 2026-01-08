@@ -15,6 +15,8 @@ import { HealthChecker } from "./utils/health";
 import { ResponseHandler } from "./utils/response";
 import logger from "./utils/logger";
 import { asyncHandler } from "./utils/asyncHandler";
+import passport from "passport";
+import "./config/passport";
 
 // routes
 import articleRoutes from "./routes/articlesRoute";
@@ -82,6 +84,7 @@ class App {
         this.app.use(express.json({ limit: "10mb" }));
         this.app.use(express.urlencoded({ extended: true, limit: "10mb" }));
         this.app.use(cookieParser());
+        this.app.use(passport.initialize());
 
         // Rate limiting
         this.app.use(globalRateLimit);

@@ -1,3 +1,49 @@
+// import { Router } from "express";
+// import { CategoryController } from "../controllers/CategoryController";
+// import { authenticateToken, requireRole } from "../middleware/authMiddleware";
+// import {
+//     categoryValidation,
+//     handleValidationErrors,
+// } from "../middleware/validation";
+
+// const router = Router();
+// const controller = new CategoryController();
+
+// // Middleware helpers
+// const adminAuth = [authenticateToken, requireRole(["ADMIN", "SUPERADMIN"])];
+
+// // Public route
+// router.get("/", controller.getCategories);
+
+// // Admin routes - explicit middleware
+// router.get("/admin/all", ...adminAuth, controller.getAllCategories);
+
+// router.post(
+//     "/",
+//     ...adminAuth,
+//     categoryValidation.createCategory,
+//     handleValidationErrors,
+//     controller.createCategory
+// );
+
+// router.put(
+//     "/:id",
+//     ...adminAuth,
+//     categoryValidation.updateCategory,
+//     handleValidationErrors,
+//     controller.updateCategory
+// );
+
+// router.delete(
+//     "/:id",
+//     ...adminAuth,
+//     categoryValidation.deleteCategory,
+//     handleValidationErrors,
+//     controller.deleteCategory
+// );
+
+// export default router;
+
 import { Router } from "express";
 import { CategoryController } from "../controllers/CategoryController";
 import { authenticateToken, requireRole } from "../middleware/authMiddleware";
@@ -13,11 +59,19 @@ const controller = new CategoryController();
 // Path: /api/categories
 router.get("/", controller.getCategories);
 
-// Admin routes require authentication and Admin/SuperAdmin role
+// Admin routes - PEHLE specific routes, phir generic routes
+router.get(
+    "/admin/all",
+    authenticateToken,
+    requireRole(["ADMIN", "SUPERADMIN"]),
+    controller.getAllCategories
+);
+
+// Ab baaki admin routes ke liye middleware apply karo
 router.use(authenticateToken);
 router.use(requireRole(["ADMIN", "SUPERADMIN"]));
 
-// 1. Create Category (POST /categories)
+// Create Category (POST /categories)
 router.post(
     "/",
     categoryValidation.createCategory,
@@ -25,10 +79,7 @@ router.post(
     controller.createCategory
 );
 
-// 2. Get All Categories (Admin List - GET /categories/admin/all)
-router.get("/admin/all", controller.getAllCategories);
-
-// 3. Update Category (PUT /categories/:id)
+// Update Category (PUT /categories/:id)
 router.put(
     "/:id",
     categoryValidation.updateCategory,
@@ -36,7 +87,7 @@ router.put(
     controller.updateCategory
 );
 
-// 4. Delete Category (DELETE /categories/:id)
+// Delete Category (DELETE /categories/:id)
 router.delete(
     "/:id",
     categoryValidation.deleteCategory,

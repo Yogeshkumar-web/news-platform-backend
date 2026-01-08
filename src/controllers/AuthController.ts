@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import passport from "passport";
 import { AuthService } from "../services/AuthService";
 import { ResponseHandler } from "../utils/response";
 import { env } from "../config/environment";
@@ -11,6 +12,40 @@ export class AuthController {
     constructor() {
         this.authService = new AuthService();
     }
+
+    googleAuth = passport.authenticate("google", {
+        scope: ["profile", "email"],
+    });
+
+    googleCallback = asyncHandler(
+        async (req: Request, res: Response, next: NextFunction) => {
+            passport.authenticate(
+                "google",
+                { session: false },
+                async (err: any, user: any, info: any) => {
+                    if (err || !user) {
+                        console.error("❌ Passport Authentication Failed:", err);
+                        console.log("   - User:", user);
+                        console.log("   - Info:", info);
+                        return res.redirect(`${env.CLIENT_URL}/login?error=auth_failed`);
+                    }
+
+                    // Log the user in effectively (generate token)
+                    const tokenPayload = this.authService.createTokenPayload(user);
+                    const token = this.authService.generateToken(tokenPayload);
+                    
+                    const cookieOptions = this.authService.getCookieOptions(
+                        env.NODE_ENV === "production"
+                    );
+                    
+                    res.cookie("token", token, cookieOptions);
+                    
+                    // Redirect to frontend
+                    return res.redirect(`${env.CLIENT_URL}/dashboard`);
+                }
+            )(req, res, next);
+        }
+    );
 
     register = asyncHandler(
         async (req: Request, res: Response, next: NextFunction) => {

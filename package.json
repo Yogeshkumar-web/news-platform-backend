@@ -9,7 +9,7 @@
         "clean": "rimraf dist",
         "build": "npm ci && tsc",
         "start": "node dist/server.js",
-        "dev": "nodemon --exec ts-node src/server.ts"
+        "dev": "nodemon --exec ts-node --transpile-only src/server.ts"
     },
     "keywords": [],
     "author": "",
@@ -57,6 +57,8 @@
         "@types/multer": "^2.0.0",
         "@types/node": "^24.10.1",
         "@types/nodemailer": "^7.0.4",
+        "@types/passport": "^1.0.17",
+        "@types/passport-google-oauth20": "^2.0.17",
         "@types/pg": "^8.15.6",
         "@types/rimraf": "^3.0.2",
         "@types/sanitize-html": "^2.16.0",

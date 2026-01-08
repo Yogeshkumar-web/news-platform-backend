@@ -41,3 +41,11 @@ Thumbs.db
 /generated/prisma
 
 /generated/prisma
+.env.example
+frontend_oauth_guide.md
+FRONTEND_QUICK_REFERENCE.md
+IMPLEMENTATION_SUMMARY.md
+debug_tsx.log
+debug_v2.log
+debug.log
+start_error.log

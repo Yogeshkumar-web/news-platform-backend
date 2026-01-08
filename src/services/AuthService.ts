@@ -156,13 +156,7 @@ export class AuthService {
     //         isSubscriber: user.isSuspended,
     //     };
 
-    //     const token = jwt.sign(
-    //         tokenPayload,
-    //         env.JWT_SECRET as Secret,
-    //         {
-    //             expiresIn: env.JWT_EXPIRES_IN,
-    //         } as SignOptions
-    //     );
+    //     const token = this.generateToken(tokenPayload);
 
     //     logger.info("User logged in successfully", { userId: user.id, email });
 
@@ -293,6 +287,12 @@ export class AuthService {
         }
 
         // 4. Verify password
+        if (!user.hashedPass) {
+            throw new AuthenticationError(
+                "Invalid credentials",
+                "INVALID_CREDENTIALS"
+            );
+        }
         const isValidPassword = await bcrypt.compare(password, user.hashedPass);
         if (!isValidPassword) {
             throw new AuthenticationError(
@@ -314,13 +314,7 @@ export class AuthService {
             isSubscriber: isSubscriber,
         };
 
-        const token = jwt.sign(
-            tokenPayload,
-            env.JWT_SECRET as Secret,
-            {
-                expiresIn: env.JWT_EXPIRES_IN,
-            } as SignOptions
-        );
+        const token = this.generateToken(tokenPayload);
 
         logger.info("User logged in successfully", { userId: user.id, email });
 
@@ -513,6 +507,12 @@ export class AuthService {
             throw new NotFoundError("User not found", "USER_NOT_FOUND");
         }
 
+        if (!user.hashedPass) {
+             throw new AuthenticationError(
+                "You don't have a password set.",
+                "PASSWORD_NOT_SET"
+            );
+        }
         const isValidPassword = await bcrypt.compare(
             oldPassword,
             user.hashedPass
@@ -576,5 +576,32 @@ export class AuthService {
             default:
                 return 7 * 24 * 60 * 60 * 1000;
         }
+    }
+
+    /**
+     * Generates a JWT token.
+     */
+    generateToken(payload: AuthTokenPayload): string {
+        return jwt.sign(
+            payload,
+            env.JWT_SECRET as Secret,
+            {
+                expiresIn: env.JWT_EXPIRES_IN,
+            } as SignOptions
+        );
+    }
+
+    /**
+     * Generates token payload from user object.
+     */
+    createTokenPayload(user: any): AuthTokenPayload {
+         const isSubscriber = user.isSubscriber ?? !!user.subscription;
+         return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            isSubscriber: isSubscriber,
+        };
     }
 }

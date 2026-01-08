@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -7,17 +6,15 @@ generator client {
 datasource db {
   provider = "postgresql"
   // url = env("DATABASE_URL")
-
 }
-
 
 // User Role Enum
 enum UserRole {
-    ADMIN
-    SUPERADMIN
-    WRITER
-    SUBSCRIBER
-    USER
+  ADMIN
+  SUPERADMIN
+  WRITER
+  SUBSCRIBER
+  USER
 }
 
 enum SubscriptionStatus {
@@ -44,165 +41,165 @@ enum CommentStatus {
 
 // Article Status Enum
 enum ArticleStatus {
-    DRAFT
-    PUBLISHED
-    ARCHIVED
-    PENDING_REVIEW
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  PENDING_REVIEW
 }
 
 // --- CORE MODELS ---
 
 model User {
-    id           String   @id @default(cuid())
-    name         String   @db.VarChar(150)
-    isVerified      Boolean  @default(false) 
-    verificationToken String?  @unique 
-    googleId        String?  @unique 
-    email        String   @unique @db.VarChar(255)
-    hashedPass   String   @db.VarChar(255)
-    role         UserRole @default(USER)
-    profileImage String?  @db.VarChar(255)
-    bio          String?  @db.Text
-    subscription   Subscription?
-    subscriptionId String?       @unique // One-to-one relationship
-  
-  // NEW RELATIONSHIP (Phase 2: Saved Articles ke liye)
-    savedArticles  Article[]     @relation("UserSavedArticles")
-    status UserStatus @default(ACTIVE)
-    isSuspended  Boolean  @default(false)
-    createdAt    DateTime @default(now()) @map("created_at")
-    updatedAt    DateTime @updatedAt @map("updated_at")
+  id                String        @id @default(cuid())
+  name              String        @db.VarChar(150)
+  isVerified        Boolean       @default(false)
+  verificationToken String?       @unique
+  googleId          String?       @unique
+  email             String        @unique @db.VarChar(255)
+  hashedPass        String?       @db.VarChar(255)
+  role              UserRole      @default(USER)
+  profileImage      String?       @db.VarChar(255)
+  bio               String?       @db.Text
+  subscription      Subscription?
+  subscriptionId    String?       @unique // One-to-one relationship
 
-    // Relationships
-    articles Article[]
-    comments Comment[]
-    likes    Like[]
+  // NEW RELATIONSHIP (Phase 2: Saved Articles ke liye)
+  savedArticles Article[]  @relation("UserSavedArticles")
+  status        UserStatus @default(ACTIVE)
+  isSuspended   Boolean    @default(false)
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  // Relationships
+  articles Article[]
+  comments Comment[]
+  likes    Like[]
 }
 
 model Subscription {
-  id             String             @id @default(cuid())
-  
+  id String @id @default(cuid())
+
   // One-to-one link to User
-  userId         String             @unique
-  user           User               @relation(fields: [userId], references: [id])
-  
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
   // Fields from SubscriptionInfo interface (src/types/index.ts)
-  status         SubscriptionStatus @default(TRIAL)
-  planId         String
-  startDate      DateTime
-  endDate        DateTime
-  isAutoRenew    Boolean            @default(true)
-  
+  status      SubscriptionStatus @default(TRIAL)
+  planId      String
+  startDate   DateTime
+  endDate     DateTime
+  isAutoRenew Boolean            @default(true)
+
   // Payment gateway reference ID
-  paymentRefId   String?            @unique 
-  
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  paymentRefId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Article {
-    id        String        @id @default(cuid())
-    title     String        @db.VarChar(255)
-    slug      String        @unique @db.VarChar(255)
-    excerpt   String?       @db.VarChar(500)
-    content   String        @db.Text
-    contentJson String?     @db.Text  
-    contentType String      @default("html") 
-    status    ArticleStatus @default(DRAFT)
-    thumbnail String?       @map("thumbnail_url")
-    featured  Boolean       @default(false)
-    viewCount Int           @default(0)
-    isPremium Boolean       @default(false) @map("is_premium")
-    createdAt DateTime      @default(now()) @map("created_at")
-    updatedAt DateTime      @updatedAt @map("updated_at")
-    savedByUsers User[] @relation("UserSavedArticles")
-    publishedAt DateTime?
+  id           String        @id @default(cuid())
+  title        String        @db.VarChar(255)
+  slug         String        @unique @db.VarChar(255)
+  excerpt      String?       @db.VarChar(500)
+  content      String        @db.Text
+  contentJson  String?       @db.Text
+  contentType  String        @default("html")
+  status       ArticleStatus @default(DRAFT)
+  thumbnail    String?       @map("thumbnail_url")
+  featured     Boolean       @default(false)
+  viewCount    Int           @default(0)
+  isPremium    Boolean       @default(false) @map("is_premium")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  savedByUsers User[]        @relation("UserSavedArticles")
+  publishedAt  DateTime?
 
-    // Relationships
-    authorId          String
-    author            User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
-    comments          Comment[]
-    likes             Like[]
-    articleCategories ArticleCategory[]
+  // Relationships
+  authorId          String
+  author            User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments          Comment[]
+  likes             Like[]
+  articleCategories ArticleCategory[]
 
-    @@index([status, publishedAt])
-    @@index([authorId])
-    @@index([slug])
-    @@index([createdAt])
-    @@map("articles")
+  @@index([status, publishedAt])
+  @@index([authorId])
+  @@index([slug])
+  @@index([createdAt])
+  @@map("articles")
 }
 
 model Category {
-    id        String   @id @default(cuid())
-    key       String   @unique
-    label     String
-    count     Int      @default(0)
-    isHidden  Boolean  @default(false)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  id        String   @id @default(cuid())
+  key       String   @unique
+  label     String
+  count     Int      @default(0)
+  isHidden  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    // Relations
-    articleCategories ArticleCategory[]
+  // Relations
+  articleCategories ArticleCategory[]
 
-    @@map("categories")
+  @@map("categories")
 }
 
 // Join table for many-to-many relationship
 model ArticleCategory {
-    id         String   @id @default(cuid())
-    article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
-    articleId  String
-    category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-    categoryId String
+  id         String   @id @default(cuid())
+  article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  articleId  String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
 
-    createdAt DateTime @default(now())
+  createdAt DateTime @default(now())
 
-    @@unique([articleId, categoryId])
-    @@index([categoryId])
-    @@index([articleId])
-    @@map("article_categories")
+  @@unique([articleId, categoryId])
+  @@index([categoryId])
+  @@index([articleId])
+  @@map("article_categories")
 }
 
 // Enhanced Comment Model (with self-relation for threading)
 model Comment {
-    id         String   @id @default(cuid())
-    content    String   @db.Text
-    parentId   String?
-    isApproved Boolean  @default(true)
-    isSpam     Boolean  @default(false)
-    createdAt  DateTime @default(now()) @map("created_at")
-    updatedAt  DateTime @updatedAt @map("updated_at")
+  id         String   @id @default(cuid())
+  content    String   @db.Text
+  parentId   String?
+  isApproved Boolean  @default(true)
+  isSpam     Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
-    status CommentStatus @default(PENDING)
+  status CommentStatus @default(PENDING)
 
-    // Relationships
-    articleId String
-    article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
-    authorId  String
-    author    User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  // Relationships
+  articleId String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-    // Self-relation for threaded comments
-    parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
-    children Comment[] @relation("CommentReplies")
+  // Self-relation for threaded comments
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  children Comment[] @relation("CommentReplies")
 
-    @@index([articleId, createdAt]) // Most common query: get comments by article, ordered by date
-    @@index([authorId])             // Get user's comments
-    @@index([isApproved, isSpam])   // Filter approved/non-spam comments
-    @@index([createdAt])            // Sort by date
-    @@map("comments")
+  @@index([articleId, createdAt]) // Most common query: get comments by article, ordered by date
+  @@index([authorId]) // Get user's comments
+  @@index([isApproved, isSpam]) // Filter approved/non-spam comments
+  @@index([createdAt]) // Sort by date
+  @@map("comments")
 }
 
 // Like Model
 model Like {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
 
-    // Relationships
-    userId    String
-    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    articleId String
-    article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  // Relationships
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  articleId String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
 
-    @@unique([userId, articleId])
-    @@map("likes")
+  @@unique([userId, articleId])
+  @@map("likes")
 }

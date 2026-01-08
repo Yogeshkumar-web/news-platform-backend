@@ -63,6 +63,9 @@ const envSchema = z.object({
         .string()
         .default("http://localhost:3000,http://localhost:5000")
         .transform((val) => val.split(",").map((url) => url.trim())),
+    
+    // Client URL for redirects
+    CLIENT_URL: z.string().default("http://localhost:3000"),
 });
 
 /**

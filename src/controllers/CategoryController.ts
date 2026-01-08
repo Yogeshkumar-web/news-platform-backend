@@ -11,11 +11,13 @@ export class CategoryController {
     // Admin: Create new category (POST /categories)
     createCategory = asyncHandler(async (req: Request, res: Response) => {
         const category = await categoryService.createCategory(req.body);
-        return ResponseHandler.created(
+        const response = ResponseHandler.created(
             res,
             category,
             "Category created successfully"
         );
+        // console.log("[Backend Response]", response);
+        return response;
     });
 
     // Admin: Get list of all categories (GET /categories/admin/all)
