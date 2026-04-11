@@ -21,10 +21,10 @@ export const authenticateToken = async (
         // Prefer Authorization header but also allow cookie fallback
         const authHeader = req.headers.authorization;
         const token =
-            req.cookies?.token ||
             (authHeader && authHeader.startsWith("Bearer ")
                 ? authHeader.split(" ")[1]
-                : undefined);
+                : undefined) ||
+            req.cookies?.token;
 
         if (!token) {
             throw new AuthenticationError("No token provided");

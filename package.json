@@ -32,7 +32,7 @@
         "imagekit": "^6.0.0",
         "jsonwebtoken": "^9.0.2",
         "multer": "^2.0.2",
-        "nodemailer": "^7.0.10",
+        "nodemailer": "^8.0.5",
         "passport": "^0.7.0",
         "passport-google-oauth20": "^2.0.0",
         "pg": "^8.16.3",
@@ -64,7 +64,7 @@
         "@types/sanitize-html": "^2.16.0",
         "@types/uuid": "^10.0.0",
         "nodemon": "^3.1.10",
-        "prisma": "^7.0.0",
+        "prisma": "^6.19.3",
         "ts-node": "^10.9.2",
         "tsx": "^4.20.6",
         "typescript": "^5.9.3"

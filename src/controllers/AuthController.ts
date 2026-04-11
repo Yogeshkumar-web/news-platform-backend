@@ -13,9 +13,20 @@ export class AuthController {
         this.authService = new AuthService();
     }
 
-    googleAuth = passport.authenticate("google", {
-        scope: ["profile", "email"],
-    });
+    googleAuth = (req: Request, res: Response, next: NextFunction) => {
+        let state = "/";
+        if (req.query.redirect) {
+            state = req.query.redirect as string;
+        }
+        
+        // Base64 encode the state JSON to pass to Google
+        const stateStr = Buffer.from(JSON.stringify({ redirect: state })).toString("base64");
+        
+        passport.authenticate("google", {
+            scope: ["profile", "email"],
+            state: stateStr,
+        })(req, res, next);
+    };
 
     googleCallback = asyncHandler(
         async (req: Request, res: Response, next: NextFunction) => {
@@ -23,28 +34,39 @@ export class AuthController {
                 "google",
                 { session: false },
                 async (err: any, user: any, info: any) => {
+                    const frontendUrl = env.CLIENT_URL || "http://localhost:3000";
+                    let redirectTo = "/";
+
+                    if (req.query.state) {
+                        try {
+                            const decodedState = JSON.parse(
+                                Buffer.from(req.query.state as string, "base64").toString("utf8")
+                            );
+                            if (decodedState.redirect) {
+                                redirectTo = decodedState.redirect;
+                            }
+                        } catch (error) {
+                            console.error("Error decoding state", error);
+                        }
+                    }
+
                     if (err || !user) {
                         console.error("❌ Passport Authentication Failed:", err);
-                        console.log("   - User:", user);
-                        console.log("   - Info:", info);
-                        return res.redirect(`${env.CLIENT_URL}/login?error=auth_failed`);
+                        return res.redirect(
+                            `${frontendUrl}/api/auth/callback?error=auth_failed`
+                        );
                     }
 
                     // Log the user in effectively (generate token)
                     const tokenPayload = this.authService.createTokenPayload(user);
                     const token = this.authService.generateToken(tokenPayload);
-                    
-                    const cookieOptions = this.authService.getCookieOptions(
-                        env.NODE_ENV === "production"
-                    );
-                    
-                    res.cookie("token", token, cookieOptions);
-                    
-                    // Redirect to frontend
-                    return res.redirect(`${env.CLIENT_URL}/dashboard`);
-                }
+
+                    // Redirect securely to the frontend callback without setting cookies here
+                    const finalRedirect = `${frontendUrl}/api/auth/callback?token=${token}&redirect=${encodeURIComponent(redirectTo)}`;
+                    return res.redirect(finalRedirect);
+                },
             )(req, res, next);
-        }
+        },
     );
 
     register = asyncHandler(
@@ -56,7 +78,7 @@ export class AuthController {
                     res,
                     "Missing fields",
                     400,
-                    "VALIDATION_ERROR"
+                    "VALIDATION_ERROR",
                 );
             }
 
@@ -69,9 +91,9 @@ export class AuthController {
             return ResponseHandler.created(
                 res,
                 { user },
-                "User registered successfully"
+                "User registered successfully",
             );
-        }
+        },
     );
 
     login = asyncHandler(
@@ -82,16 +104,16 @@ export class AuthController {
 
             // Set HTTP-only cookie
             const cookieOptions = this.authService.getCookieOptions(
-                env.NODE_ENV === "production"
+                env.NODE_ENV === "production",
             );
             res.cookie("token", result.token, cookieOptions);
 
             return ResponseHandler.success(
                 res,
-                { user: result.user },
-                "Login successful"
+                { user: result.user, token: result.token },
+                "Login successful",
             );
-        }
+        },
     );
 
     verifyEmail = asyncHandler(async (req: Request, res: Response) => {
@@ -100,7 +122,7 @@ export class AuthController {
         if (!rawToken) {
             throw new ValidationError(
                 "Verification token is missing.",
-                "TOKEN_MISSING"
+                "TOKEN_MISSING",
             );
         }
 
@@ -119,31 +141,30 @@ export class AuthController {
             if (!email) {
                 throw new ValidationError(
                     "Email address is required to resend the link.",
-                    "EMAIL_REQUIRED"
+                    "EMAIL_REQUIRED",
                 );
             }
 
-            const result = await this.authService.resendVerificationEmail(
-                email
-            );
+            const result =
+                await this.authService.resendVerificationEmail(email);
 
             // Security: Always return a generic success message
             return ResponseHandler.success(res, null, result.message);
-        }
+        },
     );
 
     getProfile = asyncHandler(
         async (
             req: AuthenticatedRequest,
             res: Response,
-            next: NextFunction
+            next: NextFunction,
         ) => {
             if (!req.user?.id) {
                 return ResponseHandler.error(
                     res,
                     "User not authenticated",
                     401,
-                    "NOT_AUTHENTICATED"
+                    "NOT_AUTHENTICATED",
                 );
             }
 
@@ -152,9 +173,9 @@ export class AuthController {
             return ResponseHandler.success(
                 res,
                 { user },
-                "Profile retrieved successfully"
+                "Profile retrieved successfully",
             );
-        }
+        },
     );
 
     logout = asyncHandler(
@@ -169,9 +190,9 @@ export class AuthController {
             return ResponseHandler.success(
                 res,
                 null,
-                "Logged out successfully"
+                "Logged out successfully",
             );
-        }
+        },
     );
 
     // New: Update user profile
@@ -183,22 +204,22 @@ export class AuthController {
                     res,
                     "User not authenticated",
                     401,
-                    "NOT_AUTHENTICATED"
+                    "NOT_AUTHENTICATED",
                 );
             }
 
             // Request body mein sirf validated fields hi honge
             const updatedUser = await this.authService.updateProfile(
                 userId,
-                req.body
+                req.body,
             );
 
             return ResponseHandler.success(
                 res,
                 { user: updatedUser },
-                "Profile updated successfully"
+                "Profile updated successfully",
             );
-        }
+        },
     );
 
     // New: Upload profile avatar
@@ -209,7 +230,7 @@ export class AuthController {
                     res,
                     "User not authenticated",
                     401,
-                    "NOT_AUTHENTICATED"
+                    "NOT_AUTHENTICATED",
                 );
             }
 
@@ -218,9 +239,9 @@ export class AuthController {
             return ResponseHandler.success(
                 res,
                 { url: imageUrl },
-                "Avatar uploaded successfully"
+                "Avatar uploaded successfully",
             );
-        }
+        },
     );
 
     // New: Change password
@@ -234,7 +255,7 @@ export class AuthController {
                     res,
                     "User not authenticated",
                     401,
-                    "NOT_AUTHENTICATED"
+                    "NOT_AUTHENTICATED",
                 );
             }
 
@@ -246,8 +267,8 @@ export class AuthController {
             return ResponseHandler.success(
                 res,
                 null,
-                "Password changed successfully"
+                "Password changed successfully",
             );
-        }
+        },
     );
 }

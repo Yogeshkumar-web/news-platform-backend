@@ -9,12 +9,12 @@ console.log("   - Client ID Present:", !!env.GOOGLE_CLIENT_ID);
 console.log("   - Client Secret Present:", !!env.GOOGLE_CLIENT_SECRET);
 console.log(
     "   - Callback URL (configured):",
-    `http://localhost:${env.PORT}/api/auth/google/callback`
+    `http://localhost:${env.PORT}/api/auth/google/callback`,
 );
 
 if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
     console.error(
-        "❌ CRITICAL ERROR: Google Client ID or Secret is MISSING in environment variables!"
+        "❌ CRITICAL ERROR: Google Client ID or Secret is MISSING in environment variables!",
     );
 }
 
@@ -24,7 +24,10 @@ try {
             {
                 clientID: env.GOOGLE_CLIENT_ID || "missing",
                 clientSecret: env.GOOGLE_CLIENT_SECRET || "missing",
-                callbackURL: `https://news-platform-backend.onrender.com/api/auth/google/callback`,
+                callbackURL:
+                    env.NODE_ENV === "production"
+                        ? `https://news-platform-backend.onrender.com/api/auth/google/callback`
+                        : `http://localhost:${env.PORT}/api/auth/google/callback`,
                 scope: ["profile", "email"],
             },
             async (accessToken, refreshToken, profile, done) => {
@@ -95,7 +98,7 @@ try {
                             // Explicitly set defaults to satisfy potential DB NOT NULL constraints
                             status: "ACTIVE",
                             isSuspended: false,
-                            hashedPass: "google-oauth-user",
+                            hashedPass: null,
                             bio: "",
                         },
                         include: { subscription: true },
@@ -108,12 +111,12 @@ try {
                 } catch (error) {
                     console.error(
                         "❌ Error inside Google Strategy Callback:",
-                        error
+                        error,
                     );
                     return done(error as Error, undefined);
                 }
-            }
-        )
+            },
+        ),
     );
     console.log("✅ Google Strategy configured successfully");
 } catch (error) {

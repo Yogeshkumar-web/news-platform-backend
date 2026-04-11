@@ -49,129 +49,6 @@ const imagekit = new ImageKit({
 });
 
 export class AuthService {
-    /**
-     * Registers a new user with hashed password.
-     */
-    // async register(data: RegisterData) {
-    //     const { name, email, password } = data;
-
-    //     // Enforce minimal validation here as an extra safety
-    //     if (!name || !email || !password) {
-    //         throw new AuthenticationError(
-    //             "Missing required fields",
-    //             "MISSING_FIELDS"
-    //         );
-    //     }
-
-    //     // Check if user already exists
-    //     const existingUser = await db.user.findUnique({
-    //         where: { email },
-    //     });
-
-    //     if (existingUser) {
-    //         throw new ConflictError("Email already registered");
-    //     }
-
-    //     // Hash password safely
-    //     const saltRounds =
-    //         typeof env.BCRYPT_SALT_ROUNDS === "string"
-    //             ? parseInt(env.BCRYPT_SALT_ROUNDS, 10)
-    //             : env.BCRYPT_SALT_ROUNDS;
-    //     if (!saltRounds || saltRounds < 10) {
-    //         // Minimum recommended salt rounds
-    //         logger.warn("BCRYPT_SALT_ROUNDS too low, defaulting to 10");
-    //     }
-    //     const passwordHash = await bcrypt.hash(password, saltRounds || 10);
-
-    //     // Create user
-    //     const user = await db.user.create({
-    //         data: {
-    //             name,
-    //             email,
-    //             hashedPass: passwordHash,
-    //         },
-    //         select: {
-    //             id: true,
-    //             name: true,
-    //             email: true,
-    //             role: true,
-    //             createdAt: true,
-    //         },
-    //     });
-
-    //     logger.info("User registered successfully", { userId: user.id, email });
-
-    //     return user;
-    // }
-
-    // /**
-    //  * Logs in user, returns JWT and safe user info.
-    //  */
-    // async login(data: LoginData) {
-    //     const { email, password } = data;
-
-    //     if (!email || !password) {
-    //         throw new AuthenticationError(
-    //             "Missing email or password",
-    //             "MISSING_CREDENTIALS"
-    //         );
-    //     }
-
-    //     // Find user
-    //     const user = await db.user.findUnique({
-    //         where: { email },
-    //     });
-
-    //     if (!user) {
-    //         // Avoid leaking which credential is wrong
-    //         throw new AuthenticationError(
-    //             "Invalid credentials",
-    //             "INVALID_CREDENTIALS"
-    //         );
-    //     }
-
-    //     // Check if user is suspended (must exist in schema)
-    //     if ((user as any).isSuspended) {
-    //         throw new AuthenticationError(
-    //             "Account suspended",
-    //             "ACCOUNT_SUSPENDED"
-    //         );
-    //     }
-
-    //     // Verify password
-    //     const isValidPassword = await bcrypt.compare(password, user.hashedPass);
-    //     if (!isValidPassword) {
-    //         throw new AuthenticationError(
-    //             "Invalid credentials",
-    //             "INVALID_CREDENTIALS"
-    //         );
-    //     }
-
-    //     // Generate token
-    //     const tokenPayload: AuthTokenPayload = {
-    //         id: user.id,
-    //         email: user.email,
-    //         name: user.name,
-    //         role: user.role,
-    //         isSubscriber: user.isSuspended,
-    //     };
-
-    //     const token = this.generateToken(tokenPayload);
-
-    //     logger.info("User logged in successfully", { userId: user.id, email });
-
-    //     return {
-    //         token,
-    //         user: {
-    //             id: user.id,
-    //             name: user.name,
-    //             email: user.email,
-    //             role: user.role,
-    //             createdAt: user.createdAt,
-    //         },
-    //     };
-    // }
-
     async register(data: RegisterData) {
         const { name, email, password } = data;
 
@@ -179,7 +56,7 @@ export class AuthService {
         if (!name || !email || !password) {
             throw new ValidationError(
                 "Missing required fields: name, email, and password.",
-                "MISSING_FIELDS"
+                "MISSING_FIELDS",
             );
         }
 
@@ -224,7 +101,7 @@ export class AuthService {
         await emailService.sendVerificationEmail(
             user.email,
             user.name,
-            rawToken // Send the raw token in the link
+            rawToken, // Send the raw token in the link
         );
 
         logger.info("User registered, verification email sent", {
@@ -247,7 +124,7 @@ export class AuthService {
         if (!email || !password) {
             throw new AuthenticationError(
                 "Missing email or password",
-                "MISSING_CREDENTIALS"
+                "MISSING_CREDENTIALS",
             );
         }
 
@@ -266,7 +143,7 @@ export class AuthService {
         if (!user) {
             throw new AuthenticationError(
                 "Invalid credentials",
-                "INVALID_CREDENTIALS"
+                "INVALID_CREDENTIALS",
             );
         }
 
@@ -274,7 +151,7 @@ export class AuthService {
         if (!user.isVerified) {
             throw new AuthenticationError(
                 "Account not verified. Please check your email for the verification link.",
-                "EMAIL_NOT_VERIFIED"
+                "EMAIL_NOT_VERIFIED",
             );
         }
 
@@ -282,7 +159,7 @@ export class AuthService {
         if (user.isSuspended) {
             throw new AuthenticationError(
                 "Account suspended. Please contact support.",
-                "ACCOUNT_SUSPENDED"
+                "ACCOUNT_SUSPENDED",
             );
         }
 
@@ -290,14 +167,14 @@ export class AuthService {
         if (!user.hashedPass) {
             throw new AuthenticationError(
                 "Invalid credentials",
-                "INVALID_CREDENTIALS"
+                "INVALID_CREDENTIALS",
             );
         }
         const isValidPassword = await bcrypt.compare(password, user.hashedPass);
         if (!isValidPassword) {
             throw new AuthenticationError(
                 "Invalid credentials",
-                "INVALID_CREDENTIALS"
+                "INVALID_CREDENTIALS",
             );
         }
 
@@ -334,9 +211,7 @@ export class AuthService {
     async verifyUser(rawToken: string) {
         // Logic to find user, compareTokens, and update DB
         const user = await db.user.findFirst({
-            // Note: This search is imperfect, ideally token should be indexed
-            where: { verificationToken: { not: null } },
-            // ... select fields ...
+            where: { verificationToken: rawToken },
         });
 
         if (
@@ -345,7 +220,7 @@ export class AuthService {
         ) {
             throw new NotFoundError(
                 "Invalid or expired verification token.",
-                "INVALID_TOKEN"
+                "INVALID_TOKEN",
             );
         }
 
@@ -378,7 +253,7 @@ export class AuthService {
         if (user.isVerified) {
             throw new ConflictError(
                 "Email is already verified.",
-                "EMAIL_ALREADY_VERIFIED"
+                "EMAIL_ALREADY_VERIFIED",
             );
         }
 
@@ -394,7 +269,7 @@ export class AuthService {
         await emailService.sendVerificationEmail(
             user.email,
             user.name,
-            rawToken
+            rawToken,
         );
 
         return {
@@ -409,7 +284,7 @@ export class AuthService {
         if (!userId) {
             throw new AuthenticationError(
                 "User ID is required",
-                "MISSING_USER_ID"
+                "MISSING_USER_ID",
             );
         }
 
@@ -508,19 +383,19 @@ export class AuthService {
         }
 
         if (!user.hashedPass) {
-             throw new AuthenticationError(
+            throw new AuthenticationError(
                 "You don't have a password set.",
-                "PASSWORD_NOT_SET"
+                "PASSWORD_NOT_SET",
             );
         }
         const isValidPassword = await bcrypt.compare(
             oldPassword,
-            user.hashedPass
+            user.hashedPass,
         );
         if (!isValidPassword) {
             throw new AuthenticationError(
                 "Incorrect old password",
-                "INVALID_CREDENTIALS"
+                "INVALID_CREDENTIALS",
             );
         }
 
@@ -530,7 +405,7 @@ export class AuthService {
                 : env.BCRYPT_SALT_ROUNDS;
         const newPasswordHash = await bcrypt.hash(
             newPassword,
-            saltRounds || 10
+            saltRounds || 10,
         );
 
         await db.user.update({
@@ -587,7 +462,7 @@ export class AuthService {
             env.JWT_SECRET as Secret,
             {
                 expiresIn: env.JWT_EXPIRES_IN,
-            } as SignOptions
+            } as SignOptions,
         );
     }
 
@@ -595,8 +470,8 @@ export class AuthService {
      * Generates token payload from user object.
      */
     createTokenPayload(user: any): AuthTokenPayload {
-         const isSubscriber = user.isSubscriber ?? !!user.subscription;
-         return {
+        const isSubscriber = user.isSubscriber ?? !!user.subscription;
+        return {
             id: user.id,
             email: user.email,
             name: user.name,
