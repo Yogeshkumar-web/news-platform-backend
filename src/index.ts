@@ -31,9 +31,18 @@ class App {
 
     constructor() {
         this.app = express();
+        this.configureProxyTrust();
         this.initializeMiddleware();
         this.initializeRoutes();
         this.initializeErrorHandling();
+    }
+
+    private configureProxyTrust(): void {
+        if (env.NODE_ENV === "production") {
+            // Render terminates TLS/proxy traffic before Express. Trust the first
+            // proxy so req.ip and express-rate-limit use X-Forwarded-For safely.
+            this.app.set("trust proxy", 1);
+        }
     }
 
     private initializeMiddleware(): void {
