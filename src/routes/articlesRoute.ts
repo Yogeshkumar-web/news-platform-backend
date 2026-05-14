@@ -27,6 +27,28 @@ router.get(
     controller.getArticlesByCategory
 );
 
+// Static public routes must stay before /:slug.
+router.get(
+    "/featured",
+    articleValidation.getArticles,
+    handleValidationErrors,
+    controller.getFeaturedArticles
+);
+
+router.get(
+    "/popular",
+    articleValidation.getArticles,
+    handleValidationErrors,
+    controller.getPopularArticles
+);
+
+router.get(
+    "/search",
+    articleValidation.searchArticles,
+    handleValidationErrors,
+    controller.searchArticles
+);
+
 // PROTECTED ROUTES (require authentication)
 
 // Upload image for rich text editor
@@ -36,6 +58,18 @@ router.post(
     requireRole(["ADMIN", "SUPERADMIN", "WRITER"]),
     imageUploadMiddleware.single("image"),
     controller.uploadImage
+);
+
+router.post(
+    "/:articleId/like",
+    authenticateToken,
+    controller.toggleLike
+);
+
+router.post(
+    "/:articleId/toggle-save",
+    authenticateToken,
+    controller.toggleSave
 );
 
 // Get user's own articles (for dashboard)
@@ -118,38 +152,9 @@ router.patch(
     "/admin/bulk-status",
     authenticateToken,
     requireRole(["ADMIN", "SUPERADMIN"]),
-    [
-        // Add bulk validation here if needed
-    ],
-    handleValidationErrors
-    // controller.bulkStatusUpdate // You can implement this later
-);
-
-// Get featured articles
-router.get(
-    "/featured",
-    articleValidation.getArticles,
-    handleValidationErrors
-    // controller.getFeaturedArticles // You can implement this later
-);
-
-// Get popular articles
-router.get(
-    "/popular",
-    articleValidation.getArticles,
-    handleValidationErrors
-    // controller.getPopularArticles // You can implement this later
-);
-
-// Search articles
-router.get(
-    "/search",
-    [
-        // Add search validation
-        // query("q").isString().isLength({ min: 1, max: 100 }).withMessage("Search query is required and must be between 1-100 characters"),
-    ],
-    handleValidationErrors
-    // controller.searchArticles // You can implement this later
+    articleValidation.bulkStatusUpdate,
+    handleValidationErrors,
+    controller.bulkStatusUpdate
 );
 
 // Public route for article by slug (keep at end to avoid conflicts with other routes)
@@ -158,15 +163,6 @@ router.get(
     articleValidation.getBySlug,
     handleValidationErrors,
     controller.getArticleBySlug
-);
-
-router.patch(
-    "/admin/bulk-status",
-    authenticateToken,
-    requireRole(["ADMIN", "SUPERADMIN"]),
-    articleValidation.bulkStatusUpdate,
-    handleValidationErrors,
-    controller.bulkStatusUpdate
 );
 
 export default router;

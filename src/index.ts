@@ -103,7 +103,7 @@ class App {
 
         // Serve static files
         this.app.use(
-            "api/uploads",
+            "/api/uploads",
             express.static(path.join(process.cwd(), "uploads"))
         );
     }

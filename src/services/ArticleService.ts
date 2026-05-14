@@ -1,4 +1,5 @@
 import { ArticleRepository } from "../repositories/ArticleRepository";
+import db from "../config/database";
 import { normalizePageParams, buildPaginationMeta } from "../utils/pagination";
 import { categoryKey } from "../utils/category";
 import logger from "../utils/logger";
@@ -437,25 +438,31 @@ export class ArticleService {
     async getArticles(query: GetArticlesQuery, user?: AuthTokenPayload) {
         const isSubscriber = user?.isSubscriber || false;
 
-        // Base where clause to get PUBLISHED articles
-        const baseWhere: any = { status: "PUBLISHED" };
-
-        // If user is NOT a subscriber, exclude premium articles (isPremium: false)
-        if (!isSubscriber) {
-            baseWhere.isPremium = false;
-        }
-
         const { page, limit, skip } = normalizePageParams(
             query.page,
             query.pageSize
         );
 
         const where: any = { status: "PUBLISHED" };
+        if (!isSubscriber) where.isPremium = false;
+        if ((query as any).featured !== undefined) {
+            where.featured =
+                (query as any).featured === true ||
+                (query as any).featured === "true";
+        }
         if (query.category) {
             const normalized = categoryKey(query.category);
             where.articleCategories = {
                 some: { category: { key: normalized } },
             };
+        }
+        if ((query as any).search) {
+            const search = String((query as any).search);
+            where.OR = [
+                { title: { contains: search, mode: "insensitive" } },
+                { excerpt: { contains: search, mode: "insensitive" } },
+                { content: { contains: search, mode: "insensitive" } },
+            ];
         }
 
         const [total, articlesRaw] = await Promise.all([
@@ -476,6 +483,61 @@ export class ArticleService {
             articles,
             pagination: buildPaginationMeta(page, limit, total),
         };
+    }
+
+    async getFeaturedArticles(
+        query: { page?: any; pageSize?: any },
+        user?: AuthTokenPayload
+    ) {
+        return this.getArticles({ ...query, featured: true } as any, user);
+    }
+
+    async getPopularArticles(
+        query: { page?: any; pageSize?: any },
+        user?: AuthTokenPayload
+    ) {
+        const isSubscriber = user?.isSubscriber || false;
+        const { page, limit, skip } = normalizePageParams(
+            query.page,
+            query.pageSize
+        );
+
+        const where: any = { status: "PUBLISHED" };
+        if (!isSubscriber) where.isPremium = false;
+
+        const [total, articlesRaw] = await Promise.all([
+            this.repo.countPublished(where),
+            this.repo.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { viewCount: "desc" as const },
+                select: DEFAULT_SELECT as any,
+            }),
+        ]);
+
+        const articles = (articlesRaw as any[]).map((a) =>
+            this.mapArticleDbToDto(a as ArticleDb)
+        );
+
+        return {
+            articles,
+            pagination: buildPaginationMeta(page, limit, total),
+        };
+    }
+
+    async searchArticles(
+        query: { q?: string; page?: any; pageSize?: any },
+        user?: AuthTokenPayload
+    ) {
+        if (!query.q || query.q.trim().length === 0) {
+            throw new ValidationError("Search query is required", "SEARCH_REQUIRED");
+        }
+
+        return this.getArticles(
+            { page: query.page, pageSize: query.pageSize, search: query.q } as any,
+            user
+        );
     }
 
     async getCategories() {
@@ -589,5 +651,66 @@ export class ArticleService {
         });
 
         return result.count;
+    }
+
+    async toggleLike(articleId: string, userId: string) {
+        const article = await this.repo.findById(articleId, { id: true });
+        if (!article) {
+            throw new NotFoundError("Article not found", "ARTICLE_NOT_FOUND");
+        }
+
+        const existingLike = await db.like.findUnique({
+            where: {
+                userId_articleId: {
+                    userId,
+                    articleId,
+                },
+            },
+        });
+
+        if (existingLike) {
+            await db.like.delete({ where: { id: existingLike.id } });
+        } else {
+            await db.like.create({ data: { userId, articleId } });
+        }
+
+        const likeCount = await db.like.count({ where: { articleId } });
+        return {
+            isLiked: !existingLike,
+            likeCount,
+        };
+    }
+
+    async toggleSave(articleId: string, userId: string) {
+        const user = await db.user.findUnique({
+            where: { id: userId },
+            select: {
+                savedArticles: {
+                    where: { id: articleId },
+                    select: { id: true },
+                },
+            },
+        });
+
+        if (!user) {
+            throw new NotFoundError("User not found", "USER_NOT_FOUND");
+        }
+
+        const article = await this.repo.findById(articleId, { id: true });
+        if (!article) {
+            throw new NotFoundError("Article not found", "ARTICLE_NOT_FOUND");
+        }
+
+        const isSaved = user.savedArticles.length > 0;
+        await db.user.update({
+            where: { id: userId },
+            data: {
+                savedArticles: isSaved
+                    ? { disconnect: { id: articleId } }
+                    : { connect: { id: articleId } },
+            },
+        });
+
+        return { isSaved: !isSaved };
     }
 }

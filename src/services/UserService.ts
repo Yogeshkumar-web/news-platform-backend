@@ -18,6 +18,7 @@ type UserStatus = "ACTIVE" | "BANNED";
 export interface GetUsersQuery {
     page?: any;
     pageSize?: any;
+    search?: string;
     role?: UserRole;
     status?: UserStatus;
 }
@@ -43,6 +44,12 @@ export class UserService {
         const where: any = {};
         if (query.role) where.role = query.role;
         if (query.status) where.status = query.status;
+        if (query.search) {
+            where.OR = [
+                { name: { contains: query.search, mode: "insensitive" } },
+                { email: { contains: query.search, mode: "insensitive" } },
+            ];
+        }
 
         // Default to ACTIVE users if status filter is missing
         if (!where.status) {

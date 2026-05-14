@@ -43,6 +43,64 @@ export class ArticleController {
         }
     );
 
+    getFeaturedArticles = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const result = await articleService.getFeaturedArticles(
+                {
+                    page: req.query.page,
+                    pageSize: req.query.pageSize || req.query.limit,
+                },
+                req.user
+            );
+
+            return ResponseHandler.success(
+                res,
+                result.articles,
+                "Featured articles retrieved successfully",
+                result.pagination
+            );
+        }
+    );
+
+    getPopularArticles = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const result = await articleService.getPopularArticles(
+                {
+                    page: req.query.page,
+                    pageSize: req.query.pageSize || req.query.limit,
+                },
+                req.user
+            );
+
+            return ResponseHandler.success(
+                res,
+                result.articles,
+                "Popular articles retrieved successfully",
+                result.pagination
+            );
+        }
+    );
+
+    searchArticles = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const result = await articleService.searchArticles(
+                {
+                    q: req.query.q as string,
+                    page: req.query.page,
+                    pageSize: req.query.pageSize || req.query.limit,
+                },
+                req.user
+            );
+
+            return ResponseHandler.success(
+                res,
+                result.articles,
+                "Articles search completed successfully",
+                result.pagination
+            );
+        }
+    );
+
     getArticleBySlug = asyncHandler(
         async (req: AuthenticatedRequest, res: Response) => {
             const slug = req.params.slug;
@@ -250,4 +308,50 @@ export class ArticleController {
             `${updatedCount} articles status updated to ${status}`
         );
     });
+
+    toggleLike = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const { articleId } = req.params;
+            const userId = req.user?.id;
+
+            if (!userId) {
+                return ResponseHandler.error(
+                    res,
+                    "User not authenticated",
+                    401,
+                    "NOT_AUTHENTICATED"
+                );
+            }
+
+            const result = await articleService.toggleLike(articleId, userId);
+            return ResponseHandler.success(
+                res,
+                result,
+                "Article like updated successfully"
+            );
+        }
+    );
+
+    toggleSave = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const { articleId } = req.params;
+            const userId = req.user?.id;
+
+            if (!userId) {
+                return ResponseHandler.error(
+                    res,
+                    "User not authenticated",
+                    401,
+                    "NOT_AUTHENTICATED"
+                );
+            }
+
+            const result = await articleService.toggleSave(articleId, userId);
+            return ResponseHandler.success(
+                res,
+                result,
+                "Article saved state updated successfully"
+            );
+        }
+    );
 }

@@ -44,13 +44,12 @@ router.get(
 // Protected routes - Require authentication
 router.use(authenticateToken);
 
-router.use(requireRole(["ADMIN", "SUPERADMIN"]));
-
-router.patch(
-    "/:id/status",
-    commentValidation.moderate,
+// Get user's comments (current user or admin viewing others)
+router.get(
+    "/user/:userId?",
+    commentValidation.getUserComments,
     handleValidationErrors,
-    commentsController.moderateComment
+    commentsController.getUserComments
 );
 
 // Update comment (comment owner only)
@@ -69,21 +68,33 @@ router.delete(
     commentsController.deleteComment
 );
 
-// Get user's comments (current user or admin viewing others)
+// Admin routes
 router.get(
-    "/user/:userId?",
-    commentValidation.getUserComments,
-    handleValidationErrors,
-    commentsController.getUserComments
+    "/admin/all",
+    requireRole(["ADMIN", "SUPERADMIN"]),
+    commentsController.getAdminComments
 );
 
-// // Admin/Moderator only routes
-// router.use(requireRole(["ADMIN", "MODERATOR"]));
+// Backward-compatible recent comments route
+router.get(
+    "/admin/recent",
+    requireRole(["ADMIN", "SUPERADMIN"]),
+    commentsController.getRecentComments
+);
+
+router.patch(
+    "/:id/status",
+    requireRole(["ADMIN", "SUPERADMIN"]),
+    commentValidation.moderate,
+    handleValidationErrors,
+    commentsController.moderateComment
+);
 
 // Mark comment as spam
 router.post(
     "/:id/spam",
-    commentValidation.moderate,
+    requireRole(["ADMIN", "SUPERADMIN"]),
+    commentValidation.delete,
     handleValidationErrors,
     commentsController.markAsSpam
 );
@@ -91,12 +102,10 @@ router.post(
 // Approve comment
 router.post(
     "/:id/approve",
-    commentValidation.moderate,
+    requireRole(["ADMIN", "SUPERADMIN"]),
+    commentValidation.delete,
     handleValidationErrors,
     commentsController.approveComment
 );
-
-// Get recent comments across all articles
-router.get("/admin/recent", commentsController.getRecentComments);
 
 export default router;

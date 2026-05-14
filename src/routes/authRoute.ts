@@ -68,6 +68,9 @@ router.get("/me", authenticateToken, authController.getProfile);
 // Logout route
 router.post("/logout", authController.logout);
 
+// Exchange one-time OAuth login code for the standard auth cookie/session
+router.post("/oauth/exchange", authController.exchangeOAuthCode);
+
 // New: Update user profile (PUT /auth/profile)
 router.put(
     "/profile",
@@ -92,6 +95,15 @@ router.patch(
     authValidation.changePassword,
     handleValidationErrors,
     authController.changePassword
+);
+
+// Set first password for OAuth-created accounts
+router.post(
+    "/password",
+    authenticateToken,
+    authValidation.setPassword,
+    handleValidationErrors,
+    authController.setPassword
 );
 
 // Google OAuth Routes

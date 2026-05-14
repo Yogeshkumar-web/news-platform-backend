@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 // User Role Enum
@@ -47,6 +47,17 @@ enum ArticleStatus {
   PENDING_REVIEW
 }
 
+enum AuthProvider {
+  PASSWORD
+  GOOGLE
+}
+
+enum AuthTokenPurpose {
+  EMAIL_VERIFY
+  OAUTH_LOGIN_CODE
+  SET_PASSWORD
+}
+
 // --- CORE MODELS ---
 
 model User {
@@ -74,6 +85,39 @@ model User {
   articles Article[]
   comments Comment[]
   likes    Like[]
+  authIdentities AuthIdentity[]
+  authTokens     AuthToken[]
+}
+
+model AuthIdentity {
+  id                String       @id @default(cuid())
+  userId            String
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          AuthProvider
+  providerAccountId String
+  providerEmail     String?      @db.VarChar(255)
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@index([providerEmail])
+  @@map("auth_identities")
+}
+
+model AuthToken {
+  id         String           @id @default(cuid())
+  tokenHash  String           @unique
+  purpose    AuthTokenPurpose
+  userId     String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  @@index([userId, purpose])
+  @@index([expiresAt])
+  @@map("auth_tokens")
 }
 
 model Subscription {

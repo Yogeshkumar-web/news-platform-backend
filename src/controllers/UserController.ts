@@ -14,6 +14,7 @@ export class UserController {
         const result = await userService.getAllUsers({
             page: req.query.page,
             pageSize: req.query.pageSize,
+            search: req.query.search as string,
             role: req.query.role as any,
             status: req.query.status as any,
         });

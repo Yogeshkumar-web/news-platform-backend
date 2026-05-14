@@ -57,3 +57,20 @@ export const ArticleStatus = {
 } as const
 
 export type ArticleStatus = (typeof ArticleStatus)[keyof typeof ArticleStatus]
+
+
+export const AuthProvider = {
+  PASSWORD: 'PASSWORD',
+  GOOGLE: 'GOOGLE'
+} as const
+
+export type AuthProvider = (typeof AuthProvider)[keyof typeof AuthProvider]
+
+
+export const AuthTokenPurpose = {
+  EMAIL_VERIFY: 'EMAIL_VERIFY',
+  OAUTH_LOGIN_CODE: 'OAUTH_LOGIN_CODE',
+  SET_PASSWORD: 'SET_PASSWORD'
+} as const
+
+export type AuthTokenPurpose = (typeof AuthTokenPurpose)[keyof typeof AuthTokenPurpose]

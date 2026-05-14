@@ -40,6 +40,15 @@ router.get(
     controller.getSavedArticles
 );
 
+// Temporary compatibility alias; canonical route is /me/saved-articles.
+router.get(
+    "/saved-articles",
+    authenticateToken,
+    articleValidation.getArticles,
+    handleValidationErrors,
+    controller.getSavedArticles
+);
+
 router.use(requireRole(["ADMIN", "SUPERADMIN"]));
 
 // 1. Get List of Users (GET /users)
@@ -52,6 +61,17 @@ router.get(
 
 // 2. Update User Role (PATCH /users/:id/role)
 router.put(
+    "/:id/role",
+    authenticateToken,
+
+    requireSuperAdmin,
+    userValidation.updateRole,
+    handleValidationErrors,
+    controller.updateRole
+);
+
+// Temporary compatibility alias; canonical method is PUT.
+router.patch(
     "/:id/role",
     authenticateToken,
 

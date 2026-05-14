@@ -141,6 +141,17 @@ export const authValidation = {
                 "New password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
             ),
     ],
+    setPassword: [
+        body("newPassword")
+            .isLength({ min: 8, max: 128 })
+            .withMessage("New password must be between 8 and 128 characters")
+            .matches(
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/
+            )
+            .withMessage(
+                "New password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+            ),
+    ],
 };
 
 export const articleValidation = {
@@ -269,6 +280,38 @@ export const articleValidation = {
             .optional()
             .isIn(["DRAFT", "PUBLISHED", "ARCHIVED", "PENDING_REVIEW"])
             .withMessage("Invalid status filter"),
+
+        query("featured")
+            .optional()
+            .isBoolean()
+            .withMessage("Featured filter must be a boolean"),
+
+        query("search")
+            .optional()
+            .isString()
+            .trim()
+            .isLength({ min: 1, max: 100 })
+            .withMessage("Search must be between 1 and 100 characters"),
+    ],
+
+    searchArticles: [
+        query("q")
+            .isString()
+            .trim()
+            .isLength({ min: 1, max: 100 })
+            .withMessage("Search query is required and must be between 1 and 100 characters"),
+        query("page")
+            .optional()
+            .isInt({ min: 1 })
+            .withMessage("Page must be a positive integer"),
+        query("pageSize")
+            .optional()
+            .isInt({ min: 1, max: 50 })
+            .withMessage("Page size must be between 1 and 50"),
+        query("limit")
+            .optional()
+            .isInt({ min: 1, max: 50 })
+            .withMessage("Limit must be between 1 and 50"),
     ],
 
     // Individual article slug validation (strict)
@@ -600,6 +643,13 @@ export const userValidation = {
             .optional()
             .isIn(["ADMIN", "SUPERADMIN", "WRITER", "USER"]) // Assuming these roles exist
             .withMessage("Invalid user role filter"),
+
+        query("search")
+            .optional()
+            .isString()
+            .trim()
+            .isLength({ min: 1, max: 100 })
+            .withMessage("Search must be between 1 and 100 characters"),
 
         query("status")
             .optional()

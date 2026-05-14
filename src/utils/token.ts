@@ -1,4 +1,4 @@
-import { randomBytes } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { env } from "../config/environment";
 
@@ -18,4 +18,8 @@ export const compareTokens = async (
     hashedToken: string
 ): Promise<boolean> => {
     return bcrypt.compare(rawToken, hashedToken);
+};
+
+export const hashTokenForLookup = (token: string): string => {
+    return createHash("sha256").update(token).digest("hex");
 };

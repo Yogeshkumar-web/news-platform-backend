@@ -8,6 +8,7 @@ import {
 } from "../types";
 import { env } from "../config/environment";
 import { ResponseHandler } from "../utils/response";
+import db from "../config/database";
 
 /**
  * Middleware to authenticate JWT and attach user payload to req.user.
@@ -44,8 +45,42 @@ export const authenticateToken = async (
             throw new AuthenticationError("Invalid token payload");
         }
 
-        // Attach to req
-        req.user = payload;
+        const currentUser = await db.user.findUnique({
+            where: { id: payload.id },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                status: true,
+                isSuspended: true,
+                subscription: {
+                    select: { status: true },
+                },
+            },
+        });
+
+        if (!currentUser) {
+            throw new AuthenticationError("User not found", "USER_NOT_FOUND");
+        }
+
+        if (currentUser.isSuspended || currentUser.status === "BANNED") {
+            throw new AuthenticationError(
+                "Account suspended. Please contact support.",
+                "ACCOUNT_SUSPENDED"
+            );
+        }
+
+        // Attach current DB-backed auth context to req.
+        req.user = {
+            id: currentUser.id,
+            email: currentUser.email,
+            name: currentUser.name,
+            role: currentUser.role as any,
+            isSubscriber: currentUser.subscription?.status === "ACTIVE",
+            iat: payload.iat,
+            exp: payload.exp,
+        };
         next();
     } catch (error: any) {
         // Handle our custom error separately
@@ -100,14 +135,6 @@ export const authenticateToken = async (
  */
 export const requireRole = (roles: string[]) => {
     return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        console.log("[Backend Auth] User:", req.user);
-        console.log("[Backend Auth] User role:", req.user?.role);
-        console.log("[Backend Auth] Required roles:", roles);
-        console.log(
-            "[Backend Auth] Has permission:",
-            roles.includes(req.user?.role!)
-        );
-
         // Defensive check: ensure user attached
         if (!req.user) {
             return ResponseHandler.error(

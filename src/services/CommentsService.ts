@@ -113,8 +113,8 @@ export class CommentsService {
             // Check permissions
             const canDelete =
                 comment.authorId === userId || // Owner can delete
-                userRole === "ADMIN" || // Admin can delete
-                userRole === "MODERATOR"; // Moderator can delete
+                userRole === "ADMIN" ||
+                userRole === "SUPERADMIN";
 
             if (!canDelete) {
                 throw new AuthorizationError(
@@ -244,9 +244,9 @@ export class CommentsService {
     // Mark comment as spam (admin/moderator only)
     async markAsSpam(commentId: string, userId: string, userRole: string) {
         try {
-            if (userRole !== "ADMIN" && userRole !== "MODERATOR") {
+            if (userRole !== "ADMIN" && userRole !== "SUPERADMIN") {
                 throw new AuthorizationError(
-                    "Only admins and moderators can mark comments as spam",
+                    "Only admins can mark comments as spam",
                     "INSUFFICIENT_PERMISSIONS"
                 );
             }
@@ -272,9 +272,9 @@ export class CommentsService {
     // Approve comment (admin/moderator only)
     async approveComment(commentId: string, userId: string, userRole: string) {
         try {
-            if (userRole !== "ADMIN" && userRole !== "MODERATOR") {
+            if (userRole !== "ADMIN" && userRole !== "SUPERADMIN") {
                 throw new AuthorizationError(
-                    "Only admins and moderators can approve comments",
+                    "Only admins can approve comments",
                     "INSUFFICIENT_PERMISSIONS"
                 );
             }
@@ -340,6 +340,37 @@ export class CommentsService {
             logger.error("Error fetching recent comments:", { error });
             throw error;
         }
+    }
+
+    async getAdminComments(page?: any, limit?: any, status?: string) {
+        const {
+            page: normalizedPage,
+            limit: normalizedLimit,
+            skip,
+        } = normalizePageParams(page, limit, 20);
+
+        const [comments, total] = await Promise.all([
+            this.repo.findAdminAll({
+                skip,
+                take: normalizedLimit,
+                status,
+            }),
+            this.repo.countAdminAll(status),
+        ]);
+
+        return {
+            comments: comments.map((comment: any) => ({
+                ...this.mapCommentToDto(comment),
+                status: comment.status,
+                articleTitle: comment.article?.title,
+                articleSlug: comment.article?.slug,
+            })),
+            pagination: buildPaginationMeta(
+                normalizedPage,
+                normalizedLimit,
+                total
+            ),
+        };
     }
 
     // Private helper methods
@@ -424,6 +455,7 @@ export class CommentsService {
             isSpam: comment.isSpam,
             createdAt: comment.createdAt,
             updatedAt: comment.updatedAt,
+            status: comment.status,
             author: {
                 id: comment.author.id,
                 name: comment.author.name,

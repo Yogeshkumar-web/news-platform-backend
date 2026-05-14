@@ -258,6 +258,48 @@ export class CommentsRepository {
         });
     }
 
+    async findAdminAll(
+        options: {
+            skip?: number;
+            take?: number;
+            status?: string;
+        } = {}
+    ) {
+        const { skip = 0, take = 20, status } = options;
+        const where: Prisma.CommentWhereInput = {};
+        if (status) where.status = status as any;
+
+        return db.comment.findMany({
+            where,
+            skip,
+            take,
+            orderBy: { createdAt: "desc" },
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        name: true,
+                        profileImage: true,
+                        role: true,
+                    },
+                },
+                article: {
+                    select: {
+                        id: true,
+                        title: true,
+                        slug: true,
+                    },
+                },
+            },
+        });
+    }
+
+    async countAdminAll(status?: string): Promise<number> {
+        const where: Prisma.CommentWhereInput = {};
+        if (status) where.status = status as any;
+        return db.comment.count({ where });
+    }
+
     // Helper method to update article comment count
     private async updateArticleCommentCount(articleId: string) {
         // This is optional - you can calculate comment count dynamically
@@ -361,6 +403,7 @@ export class CommentsRepository {
                 content: true,
                 status: true,
                 createdAt: true,
+                updatedAt: true,
                 // Include other necessary fields for the service layer DTO
             },
         });

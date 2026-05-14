@@ -24,7 +24,8 @@ export class CommentsController {
 
         // Only admins/moderators can see spam/unapproved comments
         const user = (req as AuthenticatedRequest).user;
-        const canSeeHidden = user?.role === "ADMIN";
+        const canSeeHidden =
+            user?.role === "ADMIN" || user?.role === "SUPERADMIN";
 
         const result = await this.commentsService.getCommentsByArticleId(
             articleId,
@@ -204,7 +205,8 @@ export class CommentsController {
 
             // Users can only see their own comments unless they're admin
             const targetUserId = userId || currentUserId;
-            const canViewOthers = req.user?.role === "ADMIN";
+            const canViewOthers =
+                req.user?.role === "ADMIN" || req.user?.role === "SUPERADMIN";
 
             if (targetUserId !== currentUserId && !canViewOthers) {
                 return ResponseHandler.error(
@@ -315,7 +317,7 @@ export class CommentsController {
             const userRole = req.user?.role;
 
             // Only admins and moderators can see recent comments across all articles
-            if (userRole !== "ADMIN") {
+            if (userRole !== "ADMIN" && userRole !== "SUPERADMIN") {
                 return ResponseHandler.error(
                     res,
                     "Insufficient permissions",
@@ -332,6 +334,24 @@ export class CommentsController {
                 res,
                 comments,
                 `Retrieved ${comments.length} recent comments`
+            );
+        }
+    );
+
+    getAdminComments = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const { page, limit, status } = req.query;
+            const result = await this.commentsService.getAdminComments(
+                page,
+                limit,
+                status as string | undefined
+            );
+
+            return ResponseHandler.success(
+                res,
+                result.comments,
+                `Retrieved ${result.comments.length} comments`,
+                result.pagination
             );
         }
     );

@@ -14,7 +14,7 @@ import ImageKit from "imagekit";
 import {
     compareTokens,
     generateVerificationToken,
-    hashToken,
+    hashTokenForLookup,
 } from "../utils/token";
 import { emailService } from "./EmailService";
 
@@ -27,6 +27,10 @@ export interface UpdateProfileData {
 
 export interface ChangePasswordData {
     oldPassword: string;
+    newPassword: string;
+}
+
+export interface SetPasswordData {
     newPassword: string;
 }
 
@@ -49,6 +53,127 @@ const imagekit = new ImageKit({
 });
 
 export class AuthService {
+    private getExpiryDate(duration = env.VERIFICATION_TOKEN_EXPIRES_IN): Date {
+        const match = /^(\d+)(d|h|m|s)$/.exec(duration);
+        const fallbackMs = 60 * 60 * 1000;
+        if (!match) return new Date(Date.now() + fallbackMs);
+
+        const value = Number(match[1]);
+        const unit = match[2];
+        const multiplier =
+            unit === "d"
+                ? 24 * 60 * 60 * 1000
+                : unit === "h"
+                  ? 60 * 60 * 1000
+                  : unit === "m"
+                    ? 60 * 1000
+                    : 1000;
+
+        return new Date(Date.now() + value * multiplier);
+    }
+
+    private async createAuthToken(
+        userId: string,
+        purpose: "EMAIL_VERIFY" | "OAUTH_LOGIN_CODE" | "SET_PASSWORD",
+        expiresIn?: string
+    ): Promise<string> {
+        const rawToken = generateVerificationToken();
+
+        await db.authToken.create({
+            data: {
+                userId,
+                purpose: purpose as any,
+                tokenHash: hashTokenForLookup(rawToken),
+                expiresAt: this.getExpiryDate(expiresIn),
+            },
+        });
+
+        return rawToken;
+    }
+
+    private async consumeAuthToken(
+        rawToken: string,
+        purpose: "EMAIL_VERIFY" | "OAUTH_LOGIN_CODE" | "SET_PASSWORD"
+    ) {
+        const token = await db.authToken.findFirst({
+            where: {
+                tokenHash: hashTokenForLookup(rawToken),
+                purpose: purpose as any,
+                consumedAt: null,
+                expiresAt: { gt: new Date() },
+            },
+            include: {
+                user: {
+                    include: {
+                        subscription: {
+                            where: { status: "ACTIVE" as any },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!token) {
+            throw new NotFoundError(
+                "Invalid or expired token.",
+                "INVALID_TOKEN"
+            );
+        }
+
+        await db.authToken.update({
+            where: { id: token.id },
+            data: { consumedAt: new Date() },
+        });
+
+        return token.user;
+    }
+
+    private async ensurePasswordIdentity(userId: string, email: string) {
+        await db.authIdentity.upsert({
+            where: {
+                provider_providerAccountId: {
+                    provider: "PASSWORD" as any,
+                    providerAccountId: email,
+                },
+            },
+            create: {
+                userId,
+                provider: "PASSWORD" as any,
+                providerAccountId: email,
+                providerEmail: email,
+            },
+            update: {
+                userId,
+                providerEmail: email,
+            },
+        });
+    }
+
+    private async ensureGoogleIdentity(
+        userId: string,
+        googleId: string,
+        email: string
+    ) {
+        await db.authIdentity.upsert({
+            where: {
+                provider_providerAccountId: {
+                    provider: "GOOGLE" as any,
+                    providerAccountId: googleId,
+                },
+            },
+            create: {
+                userId,
+                provider: "GOOGLE" as any,
+                providerAccountId: googleId,
+                providerEmail: email,
+            },
+            update: {
+                userId,
+                providerEmail: email,
+            },
+        });
+    }
+
     async register(data: RegisterData) {
         const { name, email, password } = data;
 
@@ -73,11 +198,7 @@ export class AuthService {
         const saltRounds = env.BCRYPT_SALT_ROUNDS;
         const passwordHash = await bcrypt.hash(password, saltRounds);
 
-        // 4. NEW: Generate Verification Token
-        const rawToken = generateVerificationToken();
-        const hashedToken = await hashToken(rawToken);
-
-        // 5. Create user (isVerified: false and save token)
+        // 4. Create user (isVerified: false)
         const user = await db.user.create({
             data: {
                 name,
@@ -85,7 +206,6 @@ export class AuthService {
                 hashedPass: passwordHash,
                 role: "USER" as any, // Default role
                 isVerified: false, // Default to NOT verified
-                verificationToken: hashedToken, // Save hashed token
             },
             select: {
                 id: true,
@@ -97,7 +217,10 @@ export class AuthService {
             },
         });
 
-        // 6. NEW: Send Verification Email (using Resend)
+        await this.ensurePasswordIdentity(user.id, user.email);
+        const rawToken = await this.createAuthToken(user.id, "EMAIL_VERIFY");
+
+        // 5. Send Verification Email
         await emailService.sendVerificationEmail(
             user.email,
             user.name,
@@ -166,8 +289,8 @@ export class AuthService {
         // 4. Verify password
         if (!user.hashedPass) {
             throw new AuthenticationError(
-                "Invalid credentials",
-                "INVALID_CREDENTIALS",
+                "This account uses Google sign-in. Set a password before using email login.",
+                "PASSWORD_NOT_SET",
             );
         }
         const isValidPassword = await bcrypt.compare(password, user.hashedPass);
@@ -180,6 +303,7 @@ export class AuthService {
 
         // 5. Determine Subscription Status
         const isSubscriber = !!user.subscription; // True if subscription object exists
+        await this.ensurePasswordIdentity(user.id, user.email);
 
         // 6. Generate token payload (corrected isSubscriber)
         const tokenPayload: AuthTokenPayload = {
@@ -209,19 +333,27 @@ export class AuthService {
     }
 
     async verifyUser(rawToken: string) {
-        // Logic to find user, compareTokens, and update DB
-        const user = await db.user.findFirst({
-            where: { verificationToken: rawToken },
-        });
+        let user: any;
 
-        if (
-            !user ||
-            !(await compareTokens(rawToken, user.verificationToken as string))
-        ) {
-            throw new NotFoundError(
-                "Invalid or expired verification token.",
-                "INVALID_TOKEN",
-            );
+        try {
+            user = await this.consumeAuthToken(rawToken, "EMAIL_VERIFY");
+        } catch (error) {
+            // Legacy fallback for users created before AuthToken existed.
+            const legacyUsers = await db.user.findMany({
+                where: { isVerified: false, verificationToken: { not: null } },
+            });
+            user = undefined;
+            for (const candidate of legacyUsers) {
+                if (
+                    candidate.verificationToken &&
+                    (await compareTokens(rawToken, candidate.verificationToken))
+                ) {
+                    user = candidate;
+                    break;
+                }
+            }
+
+            if (!user) throw error;
         }
 
         if (user.isVerified) {
@@ -257,14 +389,16 @@ export class AuthService {
             );
         }
 
-        // Generate new token, update DB, and send email (using logic from register)
-        const rawToken = generateVerificationToken();
-        const hashedToken = await hashToken(rawToken);
-
-        await db.user.update({
-            where: { id: user.id },
-            data: { verificationToken: hashedToken },
+        await db.authToken.updateMany({
+            where: {
+                userId: user.id,
+                purpose: "EMAIL_VERIFY" as any,
+                consumedAt: null,
+            },
+            data: { consumedAt: new Date() },
         });
+
+        const rawToken = await this.createAuthToken(user.id, "EMAIL_VERIFY");
 
         await emailService.sendVerificationEmail(
             user.email,
@@ -414,6 +548,177 @@ export class AuthService {
         });
 
         logger.info("User password changed successfully", { userId });
+    }
+
+    async setPassword(userId: string, data: SetPasswordData) {
+        const user = await db.user.findUnique({
+            where: { id: userId },
+            select: { id: true, email: true, hashedPass: true },
+        });
+
+        if (!user) {
+            throw new NotFoundError("User not found", "USER_NOT_FOUND");
+        }
+
+        if (user.hashedPass) {
+            throw new ConflictError(
+                "Password already set. Use change password instead.",
+                "PASSWORD_ALREADY_SET"
+            );
+        }
+
+        const newPasswordHash = await bcrypt.hash(
+            data.newPassword,
+            env.BCRYPT_SALT_ROUNDS
+        );
+
+        await db.user.update({
+            where: { id: userId },
+            data: { hashedPass: newPasswordHash },
+        });
+
+        await this.ensurePasswordIdentity(user.id, user.email);
+
+        logger.info("Password set successfully", { userId });
+    }
+
+    async handleGoogleProfile(profile: any) {
+        const email = profile.emails?.[0]?.value?.toLowerCase();
+        const emailVerified = profile.emails?.[0]?.verified !== false;
+
+        if (!email || !emailVerified) {
+            throw new AuthenticationError(
+                "Google account must have a verified email.",
+                "GOOGLE_EMAIL_NOT_VERIFIED"
+            );
+        }
+
+        const googleId = profile.id;
+        const activeSubscription = {
+            where: { status: "ACTIVE" as any },
+        };
+
+        const existingGoogleIdentity = await db.authIdentity.findUnique({
+            where: {
+                provider_providerAccountId: {
+                    provider: "GOOGLE" as any,
+                    providerAccountId: googleId,
+                },
+            },
+            include: { user: { include: { subscription: activeSubscription } } },
+        });
+
+        if (existingGoogleIdentity) {
+            return {
+                ...existingGoogleIdentity.user,
+                isSubscriber: !!existingGoogleIdentity.user.subscription,
+            };
+        }
+
+        const existingGoogleUser = await db.user.findUnique({
+            where: { googleId },
+            include: { subscription: activeSubscription },
+        });
+
+        if (existingGoogleUser) {
+            await this.ensureGoogleIdentity(existingGoogleUser.id, googleId, email);
+            return {
+                ...existingGoogleUser,
+                isSubscriber: !!existingGoogleUser.subscription,
+            };
+        }
+
+        const existingEmailUser = await db.user.findUnique({
+            where: { email },
+            include: { subscription: activeSubscription },
+        });
+
+        if (existingEmailUser) {
+            const updatedUser = await db.user.update({
+                where: { id: existingEmailUser.id },
+                data: {
+                    googleId,
+                    isVerified: true,
+                    profileImage:
+                        existingEmailUser.profileImage ||
+                        profile.photos?.[0]?.value ||
+                        null,
+                },
+                include: { subscription: activeSubscription },
+            });
+            await this.ensureGoogleIdentity(updatedUser.id, googleId, email);
+            if (updatedUser.hashedPass) {
+                await this.ensurePasswordIdentity(updatedUser.id, updatedUser.email);
+            }
+            return {
+                ...updatedUser,
+                isSubscriber: !!updatedUser.subscription,
+            };
+        }
+
+        const newUser = await db.user.create({
+            data: {
+                googleId,
+                email,
+                name: profile.displayName || email.split("@")[0],
+                profileImage: profile.photos?.[0]?.value || null,
+                isVerified: true,
+                role: "USER" as any,
+                status: "ACTIVE" as any,
+                isSuspended: false,
+                hashedPass: null,
+                bio: "",
+            },
+            include: { subscription: activeSubscription },
+        });
+
+        await this.ensureGoogleIdentity(newUser.id, googleId, email);
+
+        return {
+            ...newUser,
+            isSubscriber: !!newUser.subscription,
+        };
+    }
+
+    async createOAuthLoginCode(userId: string) {
+        await db.authToken.updateMany({
+            where: {
+                userId,
+                purpose: "OAUTH_LOGIN_CODE" as any,
+                consumedAt: null,
+            },
+            data: { consumedAt: new Date() },
+        });
+
+        return this.createAuthToken(userId, "OAUTH_LOGIN_CODE", "5m");
+    }
+
+    async exchangeOAuthLoginCode(code: string) {
+        const user = await this.consumeAuthToken(code, "OAUTH_LOGIN_CODE");
+        if (user.isSuspended || user.status === "BANNED") {
+            throw new AuthenticationError(
+                "Account suspended. Please contact support.",
+                "ACCOUNT_SUSPENDED"
+            );
+        }
+
+        const tokenPayload = this.createTokenPayload({
+            ...user,
+            isSubscriber: !!user.subscription,
+        });
+        const token = this.generateToken(tokenPayload);
+
+        return {
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                isSubscriber: !!user.subscription,
+                createdAt: user.createdAt,
+            },
+        };
     }
 
     /**

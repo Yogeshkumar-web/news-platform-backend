@@ -176,6 +176,8 @@ export interface GetArticlesQuery {
     page?: any;
     pageSize?: any;
     category?: string;
+    featured?: boolean | string;
+    search?: string;
 }
 
 export interface GetMyArticlesQuery {

@@ -13,6 +13,14 @@ export class AuthController {
         this.authService = new AuthService();
     }
 
+    private setAuthCookie(res: Response, token: string) {
+        res.cookie(
+            "token",
+            token,
+            this.authService.getCookieOptions(env.NODE_ENV === "production")
+        );
+    }
+
     googleAuth = (req: Request, res: Response, next: NextFunction) => {
         let state = "/";
         if (req.query.redirect) {
@@ -24,6 +32,7 @@ export class AuthController {
         
         passport.authenticate("google", {
             scope: ["profile", "email"],
+            prompt: "select_account",
             state: stateStr,
         })(req, res, next);
     };
@@ -57,12 +66,12 @@ export class AuthController {
                         );
                     }
 
-                    // Log the user in effectively (generate token)
-                    const tokenPayload = this.authService.createTokenPayload(user);
-                    const token = this.authService.generateToken(tokenPayload);
+                    const loginCode = await this.authService.createOAuthLoginCode(
+                        user.id
+                    );
 
-                    // Redirect securely to the frontend callback without setting cookies here
-                    const finalRedirect = `${frontendUrl}/api/auth/callback?token=${token}&redirect=${encodeURIComponent(redirectTo)}`;
+                    // Redirect with a short-lived one-time code, never a JWT.
+                    const finalRedirect = `${frontendUrl}/api/auth/callback?code=${loginCode}&redirect=${encodeURIComponent(redirectTo)}`;
                     return res.redirect(finalRedirect);
                 },
             )(req, res, next);
@@ -103,10 +112,7 @@ export class AuthController {
             const result = await this.authService.login({ email, password });
 
             // Set HTTP-only cookie
-            const cookieOptions = this.authService.getCookieOptions(
-                env.NODE_ENV === "production",
-            );
-            res.cookie("token", result.token, cookieOptions);
+            this.setAuthCookie(res, result.token);
 
             return ResponseHandler.success(
                 res,
@@ -115,6 +121,26 @@ export class AuthController {
             );
         },
     );
+
+    exchangeOAuthCode = asyncHandler(async (req: Request, res: Response) => {
+        const { code } = req.body;
+
+        if (!code || typeof code !== "string") {
+            throw new ValidationError(
+                "OAuth login code is required.",
+                "OAUTH_CODE_REQUIRED"
+            );
+        }
+
+        const result = await this.authService.exchangeOAuthLoginCode(code);
+        this.setAuthCookie(res, result.token);
+
+        return ResponseHandler.success(
+            res,
+            { user: result.user, token: result.token },
+            "OAuth login successful"
+        );
+    });
 
     verifyEmail = asyncHandler(async (req: Request, res: Response) => {
         const rawToken = req.body.token || req.query.token; // Accepts token in body or query
@@ -268,6 +294,30 @@ export class AuthController {
                 res,
                 null,
                 "Password changed successfully",
+            );
+        },
+    );
+
+    setPassword = asyncHandler(
+        async (req: AuthenticatedRequest, res: Response) => {
+            const userId = req.user?.id;
+            const { newPassword } = req.body;
+
+            if (!userId) {
+                return ResponseHandler.error(
+                    res,
+                    "User not authenticated",
+                    401,
+                    "NOT_AUTHENTICATED",
+                );
+            }
+
+            await this.authService.setPassword(userId, { newPassword });
+
+            return ResponseHandler.success(
+                res,
+                null,
+                "Password set successfully",
             );
         },
     );
