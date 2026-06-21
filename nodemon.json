@@ -1,0 +1,6 @@
+{
+  "watch": ["src", "prisma", "prisma.config.ts"],
+  "ext": "ts,json,prisma",
+  "ignore": ["src/generated/**", "dist/**", "logs/**", "node_modules/**"],
+  "exec": "ts-node --transpile-only src/server.ts"
+}

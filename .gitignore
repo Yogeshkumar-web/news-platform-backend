@@ -36,5 +36,6 @@ dist/
 .DS_Store
 # Windows
 Thumbs.db
+*:Zone.Identifier
 logs
 generated/**
